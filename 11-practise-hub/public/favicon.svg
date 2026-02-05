@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="6" fill="#0f172a"/>
+  <!-- Open book icon: left page, spine, right page -->
+  <path d="M10 9h6v14H10a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2Z" fill="#94a3b8"/>
+  <path d="M22 9h-6v14h6a2 2 0 0 0 2-2V11a2 2 0 0 0-2-2Z" fill="#94a3b8"/>
+  <path d="M16 9v14" stroke="#64748b" stroke-width="1.5"/>
+</svg>
