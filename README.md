@@ -59,13 +59,11 @@ Run insert scripts **after** `create_11plus_supabase.sql`.
 
 ### NVR symbols and sample generator
 
-- **`nvr-symbols/`** – SVG symbol set (circle, club, spade, heart, diamond, cross, square, triangle, star) used by the NVR option generator.
+- **`nvr-symbols/`** – SVG symbol set (circle, club, spade, heart, diamond, plus, square, triangle, star) used by the NVR option generator.
 - **`sample-nvr-odd-one-out/`** – Python scripts to generate NVR odd-one-out answer-option SVGs from the picture-based-questions guide:
-  - **`generate_shape_container_svg.py`** – Shape container (optionally with symbols inside). Supports all common shapes (regular + irregular); use `--empty` for container only. Uses `../nvr-symbols/`.
-  - **`generate_template1_options.py`** – Five options for Example Template 1 (differentiator + 3–5 variators; see guide §5).
-  - **`param_splits.py`** – Allowed parameter splits for odd-one-out (e.g. 2–3, 3–1–1 for 5 options).
-  - **`generate_all_symbols_in_square.py`** – One square per symbol type (for asset check).
-  - **`run_generate_all_symbols.bat`** – Windows batch to run the "all symbols" script.
+  - **`lib/`** – NVR Python library: `nvr_logic_*` (reusable logic) and `nvr_draw_*` (shape/SVG generators). E.g. **`lib/nvr_draw_container_svg.py`** – shape container (optionally with motifs); **`lib/nvr_logic_param_splits.py`** – allowed parameter splits for odd-one-out.
+  - **`gen_question_template1.py`** – Five options for Example Template 1 (differentiator + 3–5 variators; see guide §5).
+  - **`gen_sample_motif_shape_combinations.py`** – One SVG per (shape, motif) combination (e.g. option-square-5-clubs.svg) for asset check.
   - **`PICTURE-DESCRIPTIONS.md`** – Text descriptions for sample NVR questions.
 
 ---
@@ -102,9 +100,9 @@ From the repo root:
 
 ```bash
 cd sample-nvr-odd-one-out
-python generate_template1_options.py
-python generate_template1_options.py --seed 42
-python generate_shape_container_svg.py club -n 10 -o option-club.svg
+python gen_question_template1.py
+python gen_question_template1.py --seed 42
+python lib/nvr_draw_container_svg.py club -n 10 -o option-club.svg
 ```
 
 ---

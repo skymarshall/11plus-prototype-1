@@ -46,12 +46,12 @@ Circle filled solid. Centre (5,5), radius 4.
 </g>
 ```
 
-### 2.2 `cross`
+### 2.2 `plus`
 
 Plus sign: two perpendicular lines of equal length crossing at centre. Lines from (2,5)–(8,5) and (5,2)–(5,8). Stroke width 6 (thick).
 
 ```svg
-<g id="symbol-cross" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+<g id="symbol-plus" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
   <line x1="2" y1="5" x2="8" y2="5" />
   <line x1="5" y1="2" x2="5" y2="8" />
 </g>
@@ -148,8 +148,7 @@ Five-pointed star, filled. Scaled from 0–100 to 0–10 (÷10).
 
 ## 4. File layout
 
-- **Standalone SVGs:** The folder **`nvr-symbols/`** contains one SVG per symbol key (e.g. `circle.svg`, `heart.svg`, …). Each file has `viewBox="0 0 10 10"` and can be inlined or referenced. Use these files so symbols are **totally consistent** across all questions.
-- **In answer SVGs:** Scale and place as in §3: `transform="translate(cx,cy) scale(1.25) translate(-5,-5)"` then embed the symbol (inline the SVG content or `<use href="…/nvr-symbols/circle.svg#..." />` with the same transform).
-- **Copy-paste:** The `<g>` fragments in §2 can be pasted into answer SVGs and wrapped with the transform above.
+- **Motif and shape-container SVGs:** The folder **`nvr-symbols/`** contains **`shape-{key}.svg`** for each motif and container (e.g. `shape-club.svg`, `shape-heart.svg`, `shape-square.svg`). Motif files use `viewBox="0 0 100 100"` (stroke-based outline). When **motifs** are placed inside a shape (e.g. by lib/nvr_draw_container_svg.py), the generator loads `shape-{motif}.svg`, scales to 1⁄8 of the answer (12.5 units in a 100×100 viewBox), and renders them **filled black** (guide §3.2). When a **symbol is used as a shape container**, the same outline is drawn at full container size.
+- **Legacy 10×10 fragments:** The `<g>` fragments in §2 (viewBox 0 0 10 10) can still be pasted into answer SVGs and wrapped with `transform="translate(cx,cy) scale(1.25) translate(-5,-5)"` for 12.5-unit cells. The canonical on-disk assets are the `shape-*.svg` files.
 
-Use the same scale (1.25 for 100×100 answers) and stroke rules everywhere so symbols are **totally consistent** across all questions.
+Use the same scale and fill rules everywhere so motifs and shapes are **totally consistent** across all questions.

@@ -2,7 +2,7 @@
 """
 Generate sample array SVGs (picture-based-questions-guide.md, Arrays).
 
-Calls generate_array_svg.py for presets including:
+Calls nvr_draw_array_svg.py for presets including:
   - Homogeneous arrays (triangles, squares, etc.)
   - Heterogeneous shapes (mixed types)
   - Variety in type + fill + line type (shapes, fills, line-styles; all borders black)
@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-ARRAY_GENERATOR = SCRIPT_DIR / "generate_array_svg.py"
+ARRAY_GENERATOR = SCRIPT_DIR / "lib" / "nvr_draw_array_svg.py"
 OUTPUT_DIR = SCRIPT_DIR / "output"
 
 # (rows, cols, shape_or_none, out_filename_override, shapes_csv, fills_csv, line_styles_csv)

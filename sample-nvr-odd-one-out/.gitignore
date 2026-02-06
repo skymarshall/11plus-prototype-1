@@ -6,5 +6,5 @@ __pycache__/
 # Generated output (all scripts write here)
 output/
 
-# Generated option SVGs (produced by generate_template1_options.py / generate_shape_container_svg.py)
+# Generated option SVGs (produced by gen_question_template1.py / lib/nvr_draw_container_svg.py)
 *.svg

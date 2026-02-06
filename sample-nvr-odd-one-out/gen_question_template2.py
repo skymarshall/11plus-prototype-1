@@ -8,7 +8,7 @@ Template 2:
   Shape is not a differentiator (same shape for all 5 options).
   The odd one out differs on the differentiator only.
 
-Uses param_splits.py for allowed splits; generate_shape_container_svg.py for SVG.
+Uses nvr_logic_param_splits.py for allowed splits; nvr_draw_container_svg.py for SVG.
 Partition-only (no symbols). Guide §3.9 partitioned shapes.
 """
 
@@ -19,10 +19,12 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from param_splits import ALLOWED_SPLITS, assign_split_to_indices, sample_split
-
 SCRIPT_DIR = Path(__file__).resolve().parent
-GENERATOR = SCRIPT_DIR / "generate_shape_container_svg.py"
+if str(SCRIPT_DIR / "lib") not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR / "lib"))
+from nvr_logic_param_splits import ALLOWED_SPLITS, assign_split_to_indices, sample_split
+
+GENERATOR = SCRIPT_DIR / "lib" / "nvr_draw_container_svg.py"
 OUTPUT_DIR = SCRIPT_DIR / "output"
 OPTIONS = ["option-a.svg", "option-b.svg", "option-c.svg", "option-d.svg", "option-e.svg"]
 N_OPTIONS = 5

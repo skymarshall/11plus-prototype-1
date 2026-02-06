@@ -2,16 +2,16 @@
 """
 Generate sample partitioned-shape SVGs (picture-based-questions-guide.md §3.9).
 
-Calls generate_shape_container_svg.py with --partition to produce:
+Calls nvr_draw_container_svg.py with --partition to produce:
   - Horizontal partition: square, hexagon, octagon (two or three sections)
   - Vertical partition: square, triangle, octagon
   - Diagonal partition (slash and backslash): square, hexagon, octagon (polygons only)
   - Concentric partition: circle, square, octagon (disc/ring or polygon rings and bands)
-  - Segmented partition (radial wedges): circle (6), square (4), hexagon (6), rectangle (4)
+  - Radial partition (radial sections): circle (6), square (4), hexagon (6), rectangle (4)
 
 Outputs go to script_dir/output/ with names like:
   partitioned-horizontal-square.svg, partitioned-diagonal_slash-octagon.svg,
-  partitioned-concentric-octagon-bands.svg, partitioned-segmented-circle.svg
+  partitioned-concentric-octagon-bands.svg, partitioned-radial-circle.svg
 """
 
 import os
@@ -29,7 +29,7 @@ def run(
 ) -> None:
     cmd = [
         sys.executable,
-        str(Path(__file__).resolve().parent / "generate_shape_container_svg.py"),
+        str(Path(__file__).resolve().parent / "lib" / "nvr_draw_container_svg.py"),
         "--partition",
         partition,
         "--shape",
@@ -182,38 +182,38 @@ def main() -> None:
         section_fills="white,grey,vertical_lines,grey,white",
     )
 
-    # --- Segmented (radial wedges; guide §3.9) ---
+    # --- Radial (radial sections; guide §3.9) ---
     run(
-        "segmented",
+        "radial",
         "circle",
-        output_dir / "partitioned-segmented-circle.svg",
+        output_dir / "partitioned-radial-circle.svg",
         partition_sections="0,16.67,33.33,50,66.67,83.33,100",
         section_fills="white,grey,white,grey,white,grey",
     )
     run(
-        "segmented",
+        "radial",
         "triangle",
-        output_dir / "partitioned-segmented-triangle.svg",
+        output_dir / "partitioned-radial-triangle.svg",
         partition_sections="0,33.33,66.67,100",
         section_fills="white,grey,horizontal_lines",
     )
     run(
-        "segmented",
+        "radial",
         "square",
-        output_dir / "partitioned-segmented-square.svg",
+        output_dir / "partitioned-radial-square.svg",
         section_fills="white,grey,white,grey",
     )
     run(
-        "segmented",
+        "radial",
         "hexagon",
-        output_dir / "partitioned-segmented-hexagon.svg",
+        output_dir / "partitioned-radial-hexagon.svg",
         partition_sections="0,16.67,33.33,50,66.67,83.33,100",
         section_fills="white,grey,white,grey,white,grey",
     )
     run(
-        "segmented",
+        "radial",
         "rectangle",
-        output_dir / "partitioned-segmented-rectangle.svg",
+        output_dir / "partitioned-radial-rectangle.svg",
         section_fills="white,grey,grey_light,diagonal_slash",
     )
 

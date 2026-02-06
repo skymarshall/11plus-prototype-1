@@ -20,8 +20,9 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-GENERATOR = SCRIPT_DIR / "generate_shape_container_svg.py"
-OUTPUT_DIR = SCRIPT_DIR / "output"
+GENERATOR = SCRIPT_DIR / "nvr_draw_container_svg.py"
+# When in lib/, write arrays to sample-nvr-odd-one-out/output.
+OUTPUT_DIR = SCRIPT_DIR.parent / "output"
 
 CELL_SIZE = 100
 GAP = 8
@@ -32,7 +33,7 @@ ARRAY_2X2 = [
     ("horizontal", "square", "0,33.33,66.67,100", "white,grey,diagonal_slash"),
     ("concentric", "circle", "0,50,100", "white,grey"),
     ("diagonal_slash", "hexagon", "0,50,100", "grey,white"),
-    ("segmented", "triangle", "0,33.33,66.67,100", "white,grey,horizontal_lines"),
+    ("radial", "triangle", "0,33.33,66.67,100", "white,grey,horizontal_lines"),
 ]
 
 # 3×2: (partition, shape, partition_sections, section_fills)
@@ -41,7 +42,7 @@ ARRAY_3X2 = [
     ("concentric", "circle", "0,40,60,100", "grey,white,diagonal_slash"),
     ("diagonal_backslash", "hexagon", "0,50,100", "white,grey"),
     ("vertical", "octagon", "0,33.33,66.67,100", "grey,white,vertical_lines"),
-    ("segmented", "triangle", "0,33.33,66.67,100", "white,grey,white"),
+    ("radial", "triangle", "0,33.33,66.67,100", "white,grey,white"),
     ("diagonal_slash", "pentagon", "0,50,100", "white,grey"),
 ]
 

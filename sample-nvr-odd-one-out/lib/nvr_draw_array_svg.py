@@ -6,9 +6,9 @@ An array is a regular grid of shapes with even spacing, horizontally aligned. Sh
 uniformly so the array fits inside the diagram bounding box (viewBox 0 0 100 100).
 
 Usage:
-  python generate_array_svg.py 2 2 triangle -o output/array-2x2-triangles.svg
-  python generate_array_svg.py 3 2 regular -o output/array-3x2-regular.svg
-  python generate_array_svg.py 2 2 --shapes "triangle,square,circle,pentagon" -o output/array-2x2-mixed.svg
+  python nvr_draw_array_svg.py 2 2 triangle -o output/array-2x2-triangles.svg
+  python nvr_draw_array_svg.py 3 2 regular -o output/array-3x2-regular.svg
+  python nvr_draw_array_svg.py 2 2 --shapes "triangle,square,circle,pentagon" -o output/array-2x2-mixed.svg
 
 Heterogeneous: use --shapes "s1,s2,..." (row-major, length = rows*cols).
 Per-cell style: --fills "f1,f2,..." (none, white, grey); --line-styles "solid,dashed,dotted,..." (guide §3.3). All borders black.
@@ -23,16 +23,16 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR_NAME = "output"
 
-# Line types from guide §3.3; stroke-dasharray matches generate_shape_container_svg
+# Line types from guide §3.3; stroke-dasharray matches nvr_draw_container_svg
 LINE_STYLES = ("solid", "dashed", "dotted")
 STROKE_DASHARRAY = {"solid": "", "dashed": "8 4", "dotted": "2 4"}
 
 
 def _import_shape_generator():
-    """Import shape geometry from generate_shape_container_svg (same directory)."""
+    """Import shape geometry from nvr_draw_container_svg (same directory)."""
     if str(SCRIPT_DIR) not in sys.path:
         sys.path.insert(0, str(SCRIPT_DIR))
-    import generate_shape_container_svg as gen
+    import nvr_draw_container_svg as gen
     return gen
 
 
@@ -128,7 +128,7 @@ def build_array_svg(
         cell_line_style = style_list[idx].strip().lower()
         dash = STROKE_DASHARRAY.get(cell_line_style, "")
         dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
-        vertices, path_d, _path_d_stroke, stroke_lines = get_shape_geometry(cell_shape)
+        vertices, path_d, _path_d_stroke, stroke_lines, symbol_transform, _ = get_shape_geometry(cell_shape)
         x_min, x_max, y_min, y_max = get_shape_bbox(cell_shape, vertices, path_d)
         shape_w = x_max - x_min
         shape_h = y_max - y_min
@@ -139,10 +139,14 @@ def build_array_svg(
         cx = margin + col * (cell_w + gap) + cell_w / 2
         cy = margin + row * (cell_h + gap) + cell_h / 2
         lines.append(f'  <g transform="translate({cx:.2f},{cy:.2f}) scale({scale:.4f}) translate({-shape_cx:.2f},{-shape_cy:.2f})">')
+        if symbol_transform:
+            lines.append(f'    <g transform="{symbol_transform}">')
         lines.append(f'    <path d="{path_d}" fill="{cell_fill}" stroke="{stroke}" stroke-width="{stroke_width}"{dash_attr}/>')
         if stroke_lines:
             for x1, y1, x2, y2 in stroke_lines:
                 lines.append(f'    <line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{stroke}" stroke-width="{stroke_width}"{dash_attr}/>')
+        if symbol_transform:
+            lines.append("    </g>")
         lines.append("  </g>")
 
     lines.append("</svg>")
@@ -229,7 +233,8 @@ def main() -> None:
 
     out = args.output
     if out is None:
-        out_dir = SCRIPT_DIR / OUTPUT_DIR_NAME
+        root = SCRIPT_DIR.parent if SCRIPT_DIR.name == "lib" else SCRIPT_DIR
+        out_dir = root / OUTPUT_DIR_NAME
         out_dir.mkdir(parents=True, exist_ok=True)
         label = "mixed" if shapes_arg else single_shape
         out = out_dir / f"array-{args.rows}x{args.cols}-{label}.svg"

@@ -10,20 +10,20 @@ Template 1:
   Fill is restricted to solid/white only (guide §3.6: symbols cannot appear on hatched areas).
 
 Follows picture-based-questions-guide.md §4 (terminology, frequency modifiers, allowed splits)
-and §3 (vocabulary). Uses frequency.py for weighted differentiator choice; param_splits.py for splits;
-generate_shape_container_svg.py for SVG. Common shape = regular shape or common irregular shape (guide 3.1).
+and §3 (vocabulary). Uses nvr_logic_frequency.py for weighted differentiator choice; nvr_logic_param_splits.py for splits;
+nvr_draw_container_svg.py for SVG. Common shape = regular shape or common irregular shape (guide 3.1).
 
 Usage:
-  python generate_template1_options.py
-  python generate_template1_options.py --seed 42
-  python generate_template1_options.py --differentiator shape --variators shape fill symbol
-  python generate_template1_options.py --differentiator symmetry --symmetry-line any   # some H, some V, one none
-  python generate_template1_options.py --differentiator symmetry --variators shape fill symbol
-  python generate_template1_options.py --variators shape fill symbol
+  python gen_question_template1.py
+  python gen_question_template1.py --seed 42
+  python gen_question_template1.py --differentiator shape --variators shape fill symbol
+  python gen_question_template1.py --differentiator symmetry --symmetry-line any   # some H, some V, one none
+  python gen_question_template1.py --differentiator symmetry --variators shape fill symbol
+  python gen_question_template1.py --variators shape fill symbol
 
 If no --seed is given, a seed is chosen and printed so you can repeat the run.
 
-Requires frequency.py, param_splits.py, and generate_shape_container_svg.py in this directory; nvr-symbols in parent.
+Requires lib/nvr_logic_frequency.py, lib/nvr_logic_param_splits.py, and lib/nvr_draw_container_svg.py; nvr-symbols in parent.
 """
 
 import argparse
@@ -33,11 +33,13 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from frequency import weighted_choice
-from param_splits import ALLOWED_SPLITS, assign_split_to_indices, sample_split
-
 SCRIPT_DIR = Path(__file__).resolve().parent
-GENERATOR = SCRIPT_DIR / "generate_shape_container_svg.py"
+if str(SCRIPT_DIR / "lib") not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR / "lib"))
+from nvr_logic_frequency import weighted_choice
+from nvr_logic_param_splits import ALLOWED_SPLITS, assign_split_to_indices, sample_split
+
+GENERATOR = SCRIPT_DIR / "lib" / "nvr_draw_container_svg.py"
 OUTPUT_DIR = SCRIPT_DIR / "output"
 OPTIONS = ["option-a.svg", "option-b.svg", "option-c.svg", "option-d.svg", "option-e.svg"]
 N_OPTIONS = 5
@@ -58,7 +60,7 @@ LINE_STYLES_SYMMETRIC = ["solid"]  # guide §3.3: dashed/dotted break reflection
 # All shading types allowed when shape contains symbols (guide §3.6: no hatched areas, no solid_black).
 FILLS_WHEN_SHAPE_HAS_SYMBOLS = ["grey", "grey_light", "white"]
 FILLS = FILLS_WHEN_SHAPE_HAS_SYMBOLS
-SYMBOLS = ["circle", "heart", "club", "spade", "diamond", "cross", "star", "square", "triangle"]
+SYMBOLS = ["circle", "heart", "club", "spade", "diamond", "plus", "star", "square", "triangle"]
 
 # Template 1 uses all possible line styles and all allowed fills (see above).
 POOLS: dict[str, list] = {
@@ -107,7 +109,7 @@ SHAPE_LINES: dict[str, list[str]] = {
 }
 SYMBOL_LINES: dict[str, list[str]] = {
     "circle": ["vertical", "horizontal", "diagonal_slash", "diagonal_backslash"],
-    "cross": ["vertical", "horizontal"],
+    "plus": ["vertical", "horizontal"],
     "heart": ["vertical"],
     "diamond": ["vertical", "horizontal"],
     "club": ["vertical"],

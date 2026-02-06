@@ -2,12 +2,12 @@
 """
 Generate a showcase of partition types with varied shading (picture-based-questions-guide.md §3.9).
 All shapes use solid outlines only. Produces individual SVGs per partition type and one combined
-grid SVG (partitioned-showcase.svg) that displays them together.
+grid SVG (partitioned-showcase.svg) that references them.
 
 Outputs to script_dir/output/:
   - partitioned-showcase-horizontal.svg, -vertical.svg, -diagonal_slash.svg, -diagonal_backslash.svg,
-    -concentric.svg, -segmented.svg
-  - partitioned-showcase.svg (2×3 grid referencing the above)
+    -concentric.svg, -radial.svg
+  - partitioned-showcase.svg (2×3 grid referencing the above; open in a context that resolves local refs)
 """
 
 import subprocess
@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-GENERATOR = SCRIPT_DIR / "generate_shape_container_svg.py"
+GENERATOR = SCRIPT_DIR / "lib" / "nvr_draw_container_svg.py"
 OUTPUT_DIR = SCRIPT_DIR / "output"
 
 # (partition, shape, partition_sections, section_fills) — varied shading per type
@@ -25,7 +25,7 @@ SHOWCASE_CELLS = [
     ("diagonal_slash", "hexagon", "0,33.33,66.67,100", "white,grey,diagonal_backslash"),
     ("diagonal_backslash", "octagon", "0,50,100", "diagonal_slash,white,grey"),
     ("concentric", "circle", "0,40,60,100", "white,grey,diagonal_slash,grey"),
-    ("segmented", "circle", "0,16.67,33.33,50,66.67,83.33,100", "white,grey,vertical_lines,grey,white,grey"),
+    ("radial", "circle", "0,16.67,33.33,50,66.67,83.33,100", "white,grey,vertical_lines,grey,white,grey"),
 ]
 
 
@@ -57,7 +57,7 @@ def main() -> None:
         filenames.append(name)
         run_cell(partition, shape, out, partition_sections, section_fills)
 
-    # Combined 2×3 grid: each cell 100×100, gap 8, margin 8. viewBox 0 0 (2*100 + 2*8 + 2*margin) (3*100 + 2*8 + 2*margin)
+    # Combined 2×3 grid: reference the six SVGs (individual files are the source of truth)
     cols, rows = 2, 3
     cell_size = 100
     gap = 8

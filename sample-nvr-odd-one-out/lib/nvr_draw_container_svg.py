@@ -4,73 +4,83 @@ Generate a shape-container SVG (picture-based-questions-guide.md §3.1, §3.9).
 
 Can output:
   - A shape container only (--empty), for use as part of a larger drawing.
-  - A shape container with N symbols inside (default), for full NVR answer options.
-  - A partitioned shape (--partition): horizontal, vertical, diagonal, concentric, or segmented (radial) sections with per-section shading (guide §3.9). No symbols unless extended.
+  - A shape container with N motifs inside (default), for full NVR answer options.
+  - A partitioned shape (--partition): horizontal, vertical, diagonal, concentric, or radial sections with per-section shading (guide §3.9). No motifs unless extended.
 
-Supports all common shapes: regular (circle, triangle, square, pentagon, hexagon, heptagon, octagon)
-and common irregular (right_angled_triangle, rectangle, semicircle, cross, arrow).
-Symbol content is loaded from ../nvr-symbols/{symbol}.svg when not --empty.
+Supports all common shapes: regular (circle, triangle, square, pentagon, hexagon, heptagon, octagon),
+common irregular (right_angled_triangle, rectangle, semicircle, cross, arrow),
+and symbol containers (plus, times, club, heart, diamond, spade, star) loaded from shape-{symbol}.svg.
+Motif content is loaded from ../nvr-symbols/shape-{motif}.svg when not --empty; motifs are rendered with --motif-fill (black or white) in layouts (guide §3.2).
 
 Usage:
-  python generate_shape_container_svg.py club
-  python generate_shape_container_svg.py club -o option-a.svg -n 5 --shape square
-  python generate_shape_container_svg.py --empty --shape cross --fill diagonal_slash
-  python generate_shape_container_svg.py --partition horizontal --shape square --section-fills white,grey
-  python generate_shape_container_svg.py --partition concentric --shape circle --partition-sections 0,50,100
+  python nvr_draw_container_svg.py club
+  python nvr_draw_container_svg.py club -o option-a.svg -n 5 --shape square
+  python nvr_draw_container_svg.py --empty --shape cross --fill diagonal_slash
+  python nvr_draw_container_svg.py --partition horizontal --shape square --section-fills white,grey
+  python nvr_draw_container_svg.py --partition concentric --shape circle --partition-sections 0,50,100
 """
 
 import argparse
 import math
 import random
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Callable
 
 # viewBox 0 0 100 100; placement rules per nvr-symbol-svg-design.md
 CELL_HALF = 6.25
 BORDER_MARGIN = 1.0
-MIN_CENTRE_TO_CENTRE = 15.0
-MIN_CENTRE = 15 + CELL_HALF + BORDER_MARGIN
+MIN_CENTRE_TO_CENTRE = 12.0
+MIN_CENTRE = 12 + CELL_HALF + BORDER_MARGIN
 MAX_CENTRE = 85 - CELL_HALF - BORDER_MARGIN
 MIN_DISTANCE = MIN_CENTRE_TO_CENTRE
-SYMBOL_SCALE = 1.25
+# Motif cell size in answer viewBox 0 0 100 100 is 1/8 = 12.5 units (nvr-symbol-svg-design.md)
+MOTIF_CELL_SIZE = 12.5
 MAX_PLACEMENT_ATTEMPTS = 2000
 MAX_PLACEMENT_ATTEMPTS_SYMMETRIC = 6000  # symmetric layout needs more tries (canonical half + line spacing)
 
-# Regular polygons (guide §3.1)
-POLYGON_RADIUS: dict[str, float] = {"triangle": 50.0, "pentagon": 35.0, "hexagon": 35.0, "heptagon": 35.0, "octagon": 35.0}
-DEFAULT_POLYGON_RADIUS = 35.0
+# Regular polygons (guide §3.1). Pentagon–octagon use 40 so 10 motifs fit with CELL_HALF margin (square/circle use 35/50).
+POLYGON_RADIUS: dict[str, float] = {"triangle": 50.0, "pentagon": 38.0, "hexagon": 40.0, "heptagon": 40.0, "octagon": 40.0}  # pentagon tightened 2
+DEFAULT_POLYGON_RADIUS = 40.0
 POLYGON_CY: dict[str, float] = {"triangle": 62.5}
 DEFAULT_POLYGON_CY = 50.0
-# Equilateral triangle: require symbol centres further from edges so symbols do not overlap the boundary.
+# Equilateral triangle: require motif centres further from edges so motifs do not overlap the boundary.
 TRIANGLE_EDGE_MARGIN = 7.0  # > CELL_HALF (6.25) for a small buffer
 CIRCLE_RADIUS = 35.0
-# Semicircle (default): larger radius than full circle so more symbols fit inside (guide §3.1).
+# Semicircle (default): larger radius than full circle so more motifs fit inside (guide §3.1).
 SEMICIRCLE_RADIUS = 42.0
-# Right-angled triangle (default): margin from viewBox edge; smaller margin = larger triangle so more symbols fit.
+# Right-angled triangle (default): margin from viewBox edge; smaller margin = larger triangle so more motifs fit.
 RIGHT_ANGLED_TRIANGLE_MARGIN = 8.0
 
-# All common shapes (guide §3.1): regular + common irregular
+# All common shapes (guide §3.1): regular + common irregular + symbols (as containers)
 SHAPES_REGULAR = ["circle", "triangle", "square", "pentagon", "hexagon", "heptagon", "octagon"]
 SHAPES_IRREGULAR = ["right_angled_triangle", "rectangle", "semicircle", "cross", "arrow"]
-SHAPES_ALL = SHAPES_REGULAR + SHAPES_IRREGULAR
+SHAPES_SYMBOLS = ["plus", "times", "club", "heart", "diamond", "spade", "star"]
+SHAPES_ALL = SHAPES_REGULAR + SHAPES_IRREGULAR + SHAPES_SYMBOLS
 
 
-def load_symbol_content(symbol_path: Path) -> tuple[str, str, str]:
-    """Load symbol SVG; return (inner content, fill, stroke) for wrapper <g>."""
-    text = symbol_path.read_text(encoding="utf-8")
+def load_motif_content(motif_path: Path) -> tuple[str, float, float, float]:
+    """Load motif SVG (e.g. shape-club.svg); return (inner content, scale, translate_x, translate_y).
+    Scale/translate place the motif in a MOTIF_CELL_SIZE×MOTIF_CELL_SIZE cell in 0 0 100 100 space.
+    Motifs are always rendered filled black in layouts (guide §3.2).
+    """
+    text = motif_path.read_text(encoding="utf-8")
     match = re.search(r"<svg([^>]*)>(.*)</svg>", text, re.DOTALL)
     if not match:
-        raise SystemExit(f"Could not parse symbol SVG: {symbol_path}")
+        raise SystemExit(f"Could not parse motif SVG: {motif_path}")
     attrs, inner = match.group(1), match.group(2).strip()
-    fill = "#000"
-    stroke = "#000"
-    for m in re.finditer(r'\b(fill|stroke)=["\']([^"\']+)["\']', attrs):
-        if m.group(1) == "fill":
-            fill = m.group(2) if m.group(2) != "currentColor" else "#000"
-        else:
-            stroke = m.group(2) if m.group(2) != "currentColor" else "#000"
-    return inner, fill, stroke
+    # Parse viewBox: "0 0 W H" -> scale so motif fits in MOTIF_CELL_SIZE, centre at (W/2, H/2)
+    vb = re.search(r'viewBox\s*=\s*["\']?\s*0\s+0\s+([\d.]+)\s+([\d.]+)', attrs)
+    if vb:
+        w, h = float(vb.group(1)), float(vb.group(2))
+        size = max(w, h, 1.0)
+        scale = MOTIF_CELL_SIZE / size
+        tx, ty = -w / 2, -h / 2
+    else:
+        scale = MOTIF_CELL_SIZE / 10.0  # default 0 0 10 10
+        tx, ty = -5.0, -5.0
+    return inner, scale, tx, ty
 
 
 def _mirror_point(x: float, y: float, symmetry: str) -> tuple[float, float]:
@@ -181,7 +191,7 @@ def random_positions(
 
     if len(positions) < count:
         raise SystemExit(
-            f"Could not place {count} symbols with min distance {min_dist} in {limit} attempts."
+            f"Could not place {count} motifs with min distance {min_dist} in {limit} attempts."
         )
     return positions
 
@@ -232,7 +242,7 @@ def random_positions_symmetric(
         if not inside_check(mx, my):
             return False
         if (cx, cy) == (mx, my):
-            # On the line: allowed (symmetric symbol); check overlap with existing only
+            # On the line: allowed (symmetric motif); check overlap with existing only
             return all(distance((cx, cy), p) >= min_dist for p in positions)
         # Off the line: must be at least min_dist/2 from line so mirror does not overlap
         if _distance_from_symmetry_line(cx, cy, symmetry) < min_dist_from_line:
@@ -261,7 +271,7 @@ def random_positions_symmetric(
 
     if len(positions) < count:
         raise SystemExit(
-            f"Could not place {count} symbols with layout-symmetry {symmetry} in {max_attempts} attempts."
+            f"Could not place {count} motifs with layout-symmetry {symmetry} in {max_attempts} attempts."
         )
     return positions
 
@@ -357,13 +367,18 @@ def min_distance_to_edges(p: tuple[float, float], vertices: list[tuple[float, fl
 # ----- Irregular shapes (guide §3.1 common irregular) -----
 
 def _right_angled_triangle_geometry() -> tuple[list[tuple[float, float]], str]:
-    """Right angle at bottom-left (guide §3.1). Size from RIGHT_ANGLED_TRIANGLE_MARGIN."""
+    """Right angle at bottom-left (guide §3.1). Size from RIGHT_ANGLED_TRIANGLE_MARGIN. Hypotenuse tightened 2 units toward diagonal."""
     m = RIGHT_ANGLED_TRIANGLE_MARGIN
     right_angle = (m, 100 - m)
     top_left = (m, m)
     bottom_right = (100 - m, 100 - m)
+    # Tighten bounding box close to diagonal: move hypotenuse endpoints 2 units toward each other along diagonal
+    diag_inset = 2.0
+    u = 1.0 / math.sqrt(2)
+    top_left = (top_left[0] + diag_inset * u, top_left[1] + diag_inset * u)
+    bottom_right = (bottom_right[0] - diag_inset * u, bottom_right[1] - diag_inset * u)
     vertices = [right_angle, top_left, bottom_right]
-    path_d = f"M {right_angle[0]} {right_angle[1]} L {top_left[0]} {top_left[1]} L {bottom_right[0]} {bottom_right[1]} Z"
+    path_d = f"M {right_angle[0]:.2f} {right_angle[1]:.2f} L {top_left[0]:.2f} {top_left[1]:.2f} L {bottom_right[0]:.2f} {bottom_right[1]:.2f} Z"
     return vertices, path_d
 
 
@@ -377,9 +392,18 @@ def _rectangle_geometry() -> tuple[list[tuple[float, float]], str]:
 def _semicircle_geometry() -> tuple[list[tuple[float, float]], str]:
     """Semicircle vertically centred (guide §3.1): flat at bottom, arc on top. Circle centre (50, 67.5), radius SEMICIRCLE_RADIUS."""
     r = SEMICIRCLE_RADIUS
-    cy_flat = 67.5
+    cx, cy_flat = 50.0, 67.5
     path_d = f"M {50 - r:.2f} {cy_flat} A {r} {r} 0 0 1 {50 + r:.2f} {cy_flat} Z"
-    return [], path_d  # no vertices list; use custom inside_check
+    # Vertices for partition (concentric etc.): top arc sampled (flat at bottom)
+    n_arc = 24
+    vertices: list[tuple[float, float]] = [(cx - r, cy_flat)]
+    for k in range(1, n_arc):
+        t = k / n_arc
+        angle = math.pi + math.pi * t  # pi (left) to 2pi (right), arc on top
+        vertices.append((cx + r * math.cos(angle), cy_flat + r * math.sin(angle)))
+    vertices.append((cx + r, cy_flat))
+    vertices.append((cx - r, cy_flat))
+    return vertices, path_d
 
 
 # Cross (plus) scaled to match square (15–85); corners brought in by double (inset 21 each side)
@@ -387,7 +411,7 @@ CROSS_OUTER_LO = 15.0
 CROSS_OUTER_HI = 85.0
 CROSS_INNER_LO = 36.0   # 15 + 21 (was 10.5, doubled)
 CROSS_INNER_HI = 64.0   # 85 - 21
-# Keep symbol centers at least CELL_HALF from boundary so symbols do not overlap the cross edge (arms are 21 deep so max 5 symbols: 1 center + 4 arms).
+# Keep motif centres at least CELL_HALF from boundary so motifs do not overlap the cross edge (arms are 21 deep so max 5 motifs: 1 center + 4 arms).
 CROSS_EDGE_MARGIN = CELL_HALF  # 6.25
 CROSS_SAMPLE_INSET = CELL_HALF
 
@@ -445,35 +469,459 @@ def _arrow_geometry() -> tuple[list[tuple[float, float]], str]:
     return vertices, path_d
 
 
-def get_shape_geometry(shape: str) -> tuple[list[tuple[float, float]], str, str | None, list[tuple[float, float, float, float]] | None]:
+# ----- Symbol containers (guide §3.1): load from shape-{symbol}.svg, same outlines as motifs -----
+
+def _path_d_tokenize(path_d: str) -> list[tuple[str, list[float]]]:
+    """Parse SVG path d into list of (command, numbers). Handles M,L,H,V,C,Q,A,Z and repeated implicit commands."""
+    tokens: list[tuple[str, list[float]]] = []
+    rest = re.sub(r",", " ", path_d.strip())
+    pos = 0
+    while pos < len(rest):
+        while pos < len(rest) and rest[pos] in " \t\n":
+            pos += 1
+        if pos >= len(rest):
+            break
+        if rest[pos] in "MLHVCSQTAZmlhvcsqtaz":
+            cmd = rest[pos].upper()
+            pos += 1
+            nums: list[float] = []
+            while pos < len(rest):
+                while pos < len(rest) and rest[pos] in " \t\n":
+                    pos += 1
+                if pos >= len(rest) or rest[pos] in "MLHVCSQTAZmlhvcsqtaz":
+                    break
+                m = re.match(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?", rest[pos:])
+                if m:
+                    nums.append(float(m.group(0)))
+                    pos += m.end()
+                else:
+                    break
+            tokens.append((cmd, nums))
+            continue
+        pos += 1
+    return tokens
+
+
+def _arc_endpoint_to_center(
+    x1: float, y1: float, x2: float, y2: float,
+    rx: float, ry: float, phi_deg: float, fa: int, fs: int,
+) -> tuple[float, float, float, float, float, float, float] | None:
+    """Convert SVG arc (endpoint parameterization) to center parameterization.
+    Returns (cx, cy, theta1_rad, delta_theta_rad, rx, ry, phi_rad) or None if arc is degenerate (treat as line).
+    W3C SVG impl note B.2.4 and B.2.5."""
+    rx = abs(rx)
+    ry = abs(ry)
+    if rx == 0 or ry == 0:
+        return None
+    phi = math.radians(phi_deg)
+    cos_phi = math.cos(phi)
+    sin_phi = math.sin(phi)
+    # Step 1: (x1', y1') = R(-phi) * ((x1-x2)/2, (y1-y2)/2)
+    mid_dx = (x1 - x2) * 0.5
+    mid_dy = (y1 - y2) * 0.5
+    x1p = cos_phi * mid_dx + sin_phi * mid_dy
+    y1p = -sin_phi * mid_dx + cos_phi * mid_dy
+    # Step 2 (B.2.5): ensure radii large enough
+    lambda_ = (x1p * x1p) / (rx * rx) + (y1p * y1p) / (ry * ry)
+    if lambda_ > 1:
+        scale = math.sqrt(lambda_)
+        rx *= scale
+        ry *= scale
+    # Step 2: (cx', cy')
+    denom = (rx * rx * y1p * y1p) + (ry * ry * x1p * x1p)
+    if denom == 0:
+        return None
+    radicand = (rx * rx * ry * ry - rx * rx * y1p * y1p - ry * ry * x1p * x1p) / denom
+    radicand = max(0.0, radicand)
+    k = math.sqrt(radicand)
+    sign = 1.0 if fa != fs else -1.0
+    cxp = sign * k * (rx * y1p / ry)
+    cyp = sign * k * (-ry * x1p / rx)
+    # Step 3: (cx, cy)
+    mid_x = (x1 + x2) * 0.5
+    mid_y = (y1 + y2) * 0.5
+    cx = cos_phi * cxp - sin_phi * cyp + mid_x
+    cy = sin_phi * cxp + cos_phi * cyp + mid_y
+    # Step 4: theta1 and delta_theta (in radians)
+    theta1 = math.atan2((y1p - cyp) / ry, (x1p - cxp) / rx)
+    x2p = -x1p
+    y2p = -y1p
+    theta2 = math.atan2((y2p - cyp) / ry, (x2p - cxp) / rx)
+    delta_theta = theta2 - theta1
+    if fs == 0 and delta_theta > 0:
+        delta_theta -= 2 * math.pi
+    if fs == 1 and delta_theta < 0:
+        delta_theta += 2 * math.pi
+    return (cx, cy, theta1, delta_theta, rx, ry, phi)
+
+
+def _sample_path_to_points(path_d: str, n_cubic: int = 4, n_quad: int = 3, n_arc: int = 8) -> list[tuple[float, float]]:
+    """Sample SVG path d to a polygon (list of points). Used for symbol containers (inside_check and flattened path)."""
+    tokens = _path_d_tokenize(path_d)
+    points: list[tuple[float, float]] = []
+    cur = (0.0, 0.0)
+    start = (0.0, 0.0)
+    i = 0
+    while i < len(tokens):
+        cmd, nums = tokens[i]
+        if cmd == "M":
+            j = 0
+            while j + 2 <= len(nums):
+                cur = (nums[j], nums[j + 1])
+                if j == 0:
+                    start = cur
+                    points.append(cur)
+                else:
+                    points.append(cur)
+                j += 2
+            i += 1
+        elif cmd == "L":
+            j = 0
+            while j + 2 <= len(nums):
+                cur = (nums[j], nums[j + 1])
+                points.append(cur)
+                j += 2
+            i += 1
+        elif cmd == "H":
+            for x in nums:
+                cur = (x, cur[1])
+                points.append(cur)
+            i += 1
+        elif cmd == "V":
+            for y in nums:
+                cur = (cur[0], y)
+                points.append(cur)
+            i += 1
+        elif cmd == "C":
+            j = 0
+            while j + 6 <= len(nums):
+                x1, y1, x2, y2, x3, y3 = nums[j], nums[j + 1], nums[j + 2], nums[j + 3], nums[j + 4], nums[j + 5]
+                for k in range(1, n_cubic + 1):
+                    t = k / n_cubic
+                    u = 1 - t
+                    x = u * u * u * cur[0] + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3
+                    y = u * u * u * cur[1] + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3
+                    points.append((x, y))
+                cur = (x3, y3)
+                j += 6
+            i += 1
+        elif cmd == "Q":
+            j = 0
+            while j + 4 <= len(nums):
+                x1, y1, x2, y2 = nums[j], nums[j + 1], nums[j + 2], nums[j + 3]
+                for k in range(1, n_quad + 1):
+                    t = k / n_quad
+                    u = 1 - t
+                    x = u * u * cur[0] + 2 * u * t * x1 + t * t * x2
+                    y = u * u * cur[1] + 2 * u * t * y1 + t * t * y2
+                    points.append((x, y))
+                cur = (x2, y2)
+                j += 4
+            i += 1
+        elif cmd == "A":
+            # Arc: (rx, ry, x-axis-rotation, large-arc-flag, sweep-flag, x, y). Sample points along arc so clip path follows rounded ends.
+            j = 0
+            while j + 7 <= len(nums):
+                rx, ry, phi_deg, fa, fs = nums[j], nums[j + 1], nums[j + 2], int(nums[j + 3]), int(nums[j + 4])
+                x2, y2 = nums[j + 5], nums[j + 6]
+                x1, y1 = cur[0], cur[1]
+                conv = _arc_endpoint_to_center(x1, y1, x2, y2, rx, ry, phi_deg, fa, fs)
+                if conv is None:
+                    cur = (x2, y2)
+                    points.append(cur)
+                else:
+                    cx, cy, theta1, delta_theta, rx_f, ry_f, phi = conv
+                    cos_phi = math.cos(phi)
+                    sin_phi = math.sin(phi)
+                    for k in range(1, n_arc + 1):
+                        t = k / n_arc
+                        theta = theta1 + t * delta_theta
+                        px = rx_f * math.cos(theta) * cos_phi - ry_f * math.sin(theta) * sin_phi + cx
+                        py = rx_f * math.cos(theta) * sin_phi + ry_f * math.sin(theta) * cos_phi + cy
+                        points.append((px, py))
+                    cur = (x2, y2)
+                j += 7
+            i += 1
+        elif cmd == "Z":
+            cur = start
+            points.append(cur)
+            i += 1
+        else:
+            i += 1
+    return points
+
+
+def _apply_rotate_to_points(points: list[tuple[float, float]], angle_deg: float, cx: float, cy: float) -> list[tuple[float, float]]:
+    """Rotate points about (cx, cy) by angle_deg (degrees counterclockwise)."""
+    a = math.radians(angle_deg)
+    cos_a = math.cos(a)
+    sin_a = math.sin(a)
+    out: list[tuple[float, float]] = []
+    for x, y in points:
+        dx, dy = x - cx, y - cy
+        out.append((cx + dx * cos_a - dy * sin_a, cy + dx * sin_a + dy * cos_a))
+    return out
+
+
+def _scale_path_d(path_d: str, cx: float, cy: float, scale: float) -> str:
+    """Return path d with all coordinates scaled about (cx, cy). Used for symbol concentric rings (small copies from template)."""
+    def scale_pt(x: float, y: float) -> tuple[float, float]:
+        return (cx + (x - cx) * scale, cy + (y - cy) * scale)
+
+    tokens = _path_d_tokenize(path_d)
+    out: list[str] = []
+    cur = (0.0, 0.0)
+    start = (0.0, 0.0)
+    for cmd, nums in tokens:
+        if cmd == "M":
+            j = 0
+            while j + 2 <= len(nums):
+                cur = scale_pt(nums[j], nums[j + 1])
+                if j == 0:
+                    start = cur
+                    out.append(f"M {cur[0]:.2f} {cur[1]:.2f}")
+                else:
+                    out.append(f"L {cur[0]:.2f} {cur[1]:.2f}")
+                j += 2
+        elif cmd == "L":
+            j = 0
+            while j + 2 <= len(nums):
+                cur = scale_pt(nums[j], nums[j + 1])
+                out.append(f"L {cur[0]:.2f} {cur[1]:.2f}")
+                j += 2
+        elif cmd == "H":
+            for x in nums:
+                cur = scale_pt(x, cur[1])
+                out.append(f"L {cur[0]:.2f} {cur[1]:.2f}")
+        elif cmd == "V":
+            for y in nums:
+                cur = scale_pt(cur[0], y)
+                out.append(f"L {cur[0]:.2f} {cur[1]:.2f}")
+        elif cmd == "C":
+            j = 0
+            while j + 6 <= len(nums):
+                p1 = scale_pt(nums[j], nums[j + 1])
+                p2 = scale_pt(nums[j + 2], nums[j + 3])
+                cur = scale_pt(nums[j + 4], nums[j + 5])
+                out.append(f"C {p1[0]:.2f} {p1[1]:.2f} {p2[0]:.2f} {p2[1]:.2f} {cur[0]:.2f} {cur[1]:.2f}")
+                j += 6
+        elif cmd == "Q":
+            j = 0
+            while j + 4 <= len(nums):
+                p1 = scale_pt(nums[j], nums[j + 1])
+                cur = scale_pt(nums[j + 2], nums[j + 3])
+                out.append(f"Q {p1[0]:.2f} {p1[1]:.2f} {cur[0]:.2f} {cur[1]:.2f}")
+                j += 4
+        elif cmd == "A":
+            j = 0
+            while j + 7 <= len(nums):
+                rx, ry = nums[j] * scale, nums[j + 1] * scale
+                xar, la, sw = nums[j + 2], nums[j + 3], nums[j + 4]
+                cur = scale_pt(nums[j + 5], nums[j + 6])
+                out.append(f"A {rx:.2f} {ry:.2f} {xar:.2f} {int(la)} {int(sw)} {cur[0]:.2f} {cur[1]:.2f}")
+                j += 7
+        elif cmd == "Z":
+            cur = start
+            out.append("Z")
+    return " ".join(out)
+
+
+def _rotate_path_d(path_d: str, angle_deg: float, cx: float, cy: float) -> str:
+    """Return path d with all coordinates rotated about (cx, cy) by angle_deg (degrees CCW). For symbol transform (e.g. times = plus rotated 45°)."""
+    a = math.radians(angle_deg)
+    cos_a = math.cos(a)
+    sin_a = math.sin(a)
+
+    def rot_pt(x: float, y: float) -> tuple[float, float]:
+        dx, dy = x - cx, y - cy
+        return (cx + dx * cos_a - dy * sin_a, cy + dx * sin_a + dy * cos_a)
+
+    tokens = _path_d_tokenize(path_d)
+    out: list[str] = []
+    cur = (0.0, 0.0)
+    start = (0.0, 0.0)
+    for cmd, nums in tokens:
+        if cmd == "M":
+            j = 0
+            while j + 2 <= len(nums):
+                cur = rot_pt(nums[j], nums[j + 1])
+                if j == 0:
+                    start = cur
+                    out.append(f"M {cur[0]:.2f} {cur[1]:.2f}")
+                else:
+                    out.append(f"L {cur[0]:.2f} {cur[1]:.2f}")
+                j += 2
+        elif cmd == "L":
+            j = 0
+            while j + 2 <= len(nums):
+                cur = rot_pt(nums[j], nums[j + 1])
+                out.append(f"L {cur[0]:.2f} {cur[1]:.2f}")
+                j += 2
+        elif cmd == "H":
+            for x in nums:
+                cur = rot_pt(x, cur[1])
+                out.append(f"L {cur[0]:.2f} {cur[1]:.2f}")
+        elif cmd == "V":
+            for y in nums:
+                cur = rot_pt(cur[0], y)
+                out.append(f"L {cur[0]:.2f} {cur[1]:.2f}")
+        elif cmd == "C":
+            j = 0
+            while j + 6 <= len(nums):
+                p1 = rot_pt(nums[j], nums[j + 1])
+                p2 = rot_pt(nums[j + 2], nums[j + 3])
+                cur = rot_pt(nums[j + 4], nums[j + 5])
+                out.append(f"C {p1[0]:.2f} {p1[1]:.2f} {p2[0]:.2f} {p2[1]:.2f} {cur[0]:.2f} {cur[1]:.2f}")
+                j += 6
+        elif cmd == "Q":
+            j = 0
+            while j + 4 <= len(nums):
+                p1 = rot_pt(nums[j], nums[j + 1])
+                cur = rot_pt(nums[j + 2], nums[j + 3])
+                out.append(f"Q {p1[0]:.2f} {p1[1]:.2f} {cur[0]:.2f} {cur[1]:.2f}")
+                j += 4
+        elif cmd == "A":
+            j = 0
+            while j + 7 <= len(nums):
+                rx, ry, xar, la, sw = nums[j], nums[j + 1], nums[j + 2], nums[j + 3], nums[j + 4]
+                cur = rot_pt(nums[j + 5], nums[j + 6])
+                # Ellipse rotation angle changes when path is rotated
+                xar_new = xar + angle_deg
+                out.append(f"A {rx:.2f} {ry:.2f} {xar_new:.2f} {int(la)} {int(sw)} {cur[0]:.2f} {cur[1]:.2f}")
+                j += 7
+        elif cmd == "Z":
+            cur = start
+            out.append("Z")
+    return " ".join(out)
+
+
+def _points_to_path_d(points: list[tuple[float, float]]) -> str:
+    """Flatten polygon to path M x0 y0 L x1 y1 ... Z."""
+    if not points:
+        return ""
+    parts = [f"M {points[0][0]:.2f} {points[0][1]:.2f}"]
+    for x, y in points[1:]:
+        parts.append(f"L {x:.2f} {y:.2f}")
+    parts.append("Z")
+    return " ".join(parts)
+
+
+def _serialize_path_el(path_el: ET.Element) -> str:
+    """Serialize path element to XML string with local tag (no namespace) for embedding."""
+    def escape_attr(v: str) -> str:
+        return v.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+    attrs = " ".join(f'{k}="{escape_attr(v)}"' for k, v in path_el.attrib.items())
+    return f"<path {attrs}/>" if attrs else "<path/>"
+
+
+def _load_symbol_svg(motifs_dir: Path, shape: str) -> tuple[str, str | None, str]:
+    """Load shape-{shape}.svg; return (path_d, transform_attr or None, path_element_xml). path_element_xml is the template <path .../> for drawing/concentric. Handles <g transform="rotate(...)"><path/></g>."""
+    path = motifs_dir / f"shape-{shape}.svg"
+    if not path.exists():
+        raise FileNotFoundError(f"Symbol shape SVG not found: {path}")
+    tree = ET.parse(path)
+    root = tree.getroot()
+    path_el = None
+    for el in root.iter():
+        if el.tag.endswith("}path") or el.tag == "path":
+            path_el = el
+            break
+    if path_el is None:
+        raise ValueError(f"No path in {path}")
+    path_d = path_el.get("d") or ""
+    transform: str | None = None
+    parent = next((n for n in root.iter() if path_el in list(n)), None)
+    if parent is not None and parent != root:
+        transform = parent.get("transform")
+    path_element_xml = _serialize_path_el(path_el)
+    return path_d, transform, path_element_xml
+
+
+def _parse_rotate_transform(transform_attr: str | None) -> tuple[float, float, float] | None:
+    """If transform is 'rotate(angle cx cy)' or 'rotate(angle, cx, cy)', return (angle, cx, cy). Else None."""
+    if not transform_attr or "rotate" not in transform_attr:
+        return None
+    # Match rotate(angle cx cy) or rotate(angle, cx, cy)
+    m = re.search(r"rotate\s*\(\s*([-\d.]+)\s*[, ]\s*([-\d.]+)\s*[, ]\s*([-\d.]+)\s*\)", transform_attr, re.IGNORECASE)
+    if not m:
+        return None
+    angle = float(m.group(1))
+    cx = float(m.group(2))
+    cy = float(m.group(3))
+    return (angle, cx, cy)
+
+
+def _scale_points_about_bbox_center(points: list[tuple[float, float]], inset_per_side: float) -> list[tuple[float, float]]:
+    """Scale points about bbox center so bbox is inset by inset_per_side on each side (2 units = 4 total per dimension)."""
+    if not points or inset_per_side <= 0:
+        return points
+    x_min = min(p[0] for p in points)
+    x_max = max(p[0] for p in points)
+    y_min = min(p[1] for p in points)
+    y_max = max(p[1] for p in points)
+    cx = (x_min + x_max) / 2
+    cy = (y_min + y_max) / 2
+    w = x_max - x_min
+    h = y_max - y_min
+    if w < 1e-9 or h < 1e-9:
+        return points
+    sx = (w - 2 * inset_per_side) / w
+    sy = (h - 2 * inset_per_side) / h
+    return [(cx + (p[0] - cx) * sx, cy + (p[1] - cy) * sy) for p in points]
+
+
+def _symbol_geometry(shape: str, motifs_dir: Path) -> tuple[list[tuple[float, float]], str, str | None, str]:
+    """Load symbol from shape-{shape}.svg; return (vertices, path_d, symbol_transform, path_element_xml). path_element_xml is the template <path .../> from the file for drawing/concentric. vertices sampled for inside_check/bbox."""
+    path_d, transform_attr, path_element_xml = _load_symbol_svg(motifs_dir, shape)
+    points = _sample_path_to_points(path_d)
+    if not points:
+        raise ValueError(f"Symbol {shape!r}: path produced no points")
+    rot = _parse_rotate_transform(transform_attr)
+    if rot is not None:
+        angle, cx, cy = rot
+        points = _apply_rotate_to_points(points, angle, cx, cy)
+    return points, path_d, transform_attr, path_element_xml
+
+
+def get_shape_geometry(shape: str, motifs_dir: Path | None = None) -> tuple[list[tuple[float, float]], str, str | None, list[tuple[float, float, float, float]] | None, str | None, str | None]:
     """
-    Return (vertices, path_d, path_d_stroke, stroke_lines) for the shape.
+    Return (vertices, path_d, path_d_stroke, stroke_lines, symbol_transform, symbol_path_element) for the shape.
     For cross: path_d_stroke is None, stroke_lines is 12 (x1,y1,x2,y2) segments. Otherwise stroke_lines is None.
+    For symbol containers, symbol_transform is the parent <g> transform from the SVG when present; symbol_path_element is the template <path .../> from the file for concentric/drawing.
+    For symbol containers (plus, times, club, heart, diamond, spade, star), motifs_dir is required to load shape-{symbol}.svg.
     """
     shape = (shape or "").strip().lower()
+    if shape in SHAPES_SYMBOLS:
+        if motifs_dir is None:
+            script_dir = Path(__file__).resolve().parent
+            _repo_root = script_dir.parent.parent if script_dir.name == "lib" else script_dir.parent
+            motifs_dir = _repo_root / "nvr-symbols"
+        vertices, path_d, symbol_transform, symbol_path_element = _symbol_geometry(shape, motifs_dir)
+        return vertices, path_d, None, None, symbol_transform, symbol_path_element
     if shape == "right_angled_triangle":
         v, p = _right_angled_triangle_geometry()
-        return v, p, None, None
+        return v, p, None, None, None, None
     if shape == "rectangle":
         v, p = _rectangle_geometry()
-        return v, p, None, None
+        return v, p, None, None, None, None
     if shape == "semicircle":
         v, p = _semicircle_geometry()
-        return v, p, None, None
+        return v, p, None, None, None, None
     if shape == "cross":
         v, p_fill, _p_stroke, stroke_lines = _cross_geometry()
-        return v, p_fill, None, stroke_lines
+        return v, p_fill, None, stroke_lines, None, None
     if shape == "arrow":
         v, p = _arrow_geometry()
-        return v, p, None, None
+        return v, p, None, None, None, None
     if shape == "square":
-        vertices = [(15, 15), (85, 15), (85, 85), (15, 85)]
-        path_d = "M15 15 L85 15 L85 85 L15 85 Z"
-        return vertices, path_d, None, None
+        # Tightened 2 units per side (17–83 instead of 15–85)
+        vertices = [(17, 17), (83, 17), (83, 83), (17, 83)]
+        path_d = "M17 17 L83 17 L83 83 L17 83 Z"
+        return vertices, path_d, None, None, None, None
     if shape == "circle":
         r = CIRCLE_RADIUS
         path_d = f"M 50 {50 - r} A {r} {r} 0 0 1 50 {50 + r} A {r} {r} 0 0 1 50 {50 - r} Z"
-        return [], path_d, None, None
+        return [], path_d, None, None, None, None
     sides = {"triangle": 3, "pentagon": 5, "hexagon": 6, "heptagon": 7, "octagon": 8}.get(shape)
     if sides is None:
         raise ValueError(f"Unknown shape: {shape!r}. Supported: {SHAPES_ALL}")
@@ -482,7 +930,7 @@ def get_shape_geometry(shape: str) -> tuple[list[tuple[float, float]], str, str 
     phase = POLYGON_PHASE.get(shape, 0)
     vertices = regular_polygon_vertices(sides, 50, poly_cy, radius, phase)
     path_d = regular_polygon_path(sides, 50, poly_cy, radius, phase)
-    return vertices, path_d, None, None
+    return vertices, path_d, None, None, None, None
 
 
 # Partition (guide §3.9): thin lines between sections
@@ -660,6 +1108,58 @@ def _clip_polygon_to_diagonal_backslash_band(
     return step2
 
 
+def _clip_polygon_to_polygon(
+    subject: list[tuple[float, float]],
+    clip_vertices: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    """Clip subject polygon to the interior of clip_vertices (Sutherland–Hodgman). Assumes clip_vertices in path order with interior to the left when traversing (SVG convention)."""
+    if not clip_vertices or len(clip_vertices) < 3:
+        return subject[:]
+    out = subject
+    n = len(clip_vertices)
+    for i in range(n):
+        e0 = clip_vertices[i]
+        e1 = clip_vertices[(i + 1) % n]
+        ex, ey = e1[0] - e0[0], e1[1] - e0[1]
+        # Interior to the left of edge e0->e1 in SVG (y down): (p - e0) · (ey, -ex) >= 0
+        def inside(px: float, py: float) -> bool:
+            return ex * (e0[1] - py) + ey * (px - e0[0]) >= -1e-9
+
+        def intersect_seg_line(a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float]:
+            ax, ay, bx, by = a[0], a[1], b[0], b[1]
+            denom = (bx - ax) * ey - (by - ay) * ex
+            if abs(denom) < 1e-12:
+                return (ax + bx) / 2, (ay + by) / 2
+            t = ((e0[0] - ax) * ey - (e0[1] - ay) * ex) / denom
+            t = max(0.0, min(1.0, t))
+            return (ax + t * (bx - ax), ay + t * (by - ay))
+
+        out = _clip_polygon_half_plane(out, inside, intersect_seg_line)
+        if not out:
+            return []
+    return out
+
+
+def _polygon_signed_area(vertices: list[tuple[float, float]]) -> float:
+    """Signed area (shoelace). Positive = counterclockwise in viewBox (y down)."""
+    if len(vertices) < 3:
+        return 0.0
+    n = len(vertices)
+    return 0.5 * sum(
+        vertices[i][0] * vertices[(i + 1) % n][1] - vertices[(i + 1) % n][0] * vertices[i][1]
+        for i in range(n)
+    )
+
+
+def _ensure_ccw(vertices: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    """Return vertices in counterclockwise order (new list). Required for _clip_segment_to_polygon and consistent band clipping."""
+    if len(vertices) < 3:
+        return list(vertices)
+    if _polygon_signed_area(vertices) >= 0:
+        return list(vertices)
+    return list(reversed(vertices))
+
+
 def _clip_segment_to_polygon(
     x1: float, y1: float, x2: float, y2: float,
     vertices: list[tuple[float, float]],
@@ -759,13 +1259,35 @@ def _circle_annulus_path(cx: float, cy: float, r_outer: float, r_inner: float) -
 
 
 def _polygon_centroid(vertices: list[tuple[float, float]]) -> tuple[float, float]:
-    """Centroid of polygon (vertices counterclockwise)."""
+    """Area centroid (center of mass) of polygon; vertices counterclockwise. Falls back to vertex average if area ~0."""
     n = len(vertices)
     if n == 0:
         return (50.0, 50.0)
-    ax = sum(v[0] for v in vertices) / n
-    ay = sum(v[1] for v in vertices) / n
-    return (ax, ay)
+    if n < 3:
+        return (
+            (vertices[0][0] + vertices[1][0]) / 2,
+            (vertices[0][1] + vertices[1][1]) / 2,
+        )
+    # Shoelace: A = (1/2)*sum(x_i*y_{i+1} - x_{i+1}*y_i), Cx = (1/(6A))*sum((x_i+x_{i+1})*(x_i*y_{i+1}-x_{i+1}*y_i))
+    area = 0.0
+    cx_sum = 0.0
+    cy_sum = 0.0
+    for i in range(n):
+        j = (i + 1) % n
+        xi, yi = vertices[i][0], vertices[i][1]
+        xj, yj = vertices[j][0], vertices[j][1]
+        cross = xi * yj - xj * yi
+        area += cross
+        cx_sum += (xi + xj) * cross
+        cy_sum += (yi + yj) * cross
+    area *= 0.5
+    if abs(area) < 1e-12:
+        return (
+            sum(v[0] for v in vertices) / n,
+            sum(v[1] for v in vertices) / n,
+        )
+    inv_6a = 1.0 / (6.0 * area)
+    return (cx_sum * inv_6a, cy_sum * inv_6a)
 
 
 def _scaled_polygon_vertices(
@@ -800,6 +1322,18 @@ def _circle_wedge_path(cx: float, cy: float, r: float, angle_start: float, angle
     x1 = cx + r * math.cos(angle_end)
     y1 = cy + r * math.sin(angle_end)
     return f"M {cx:.2f} {cy:.2f} L {x0:.2f} {y0:.2f} A {r:.2f} {r:.2f} 0 0 1 {x1:.2f} {y1:.2f} Z"
+
+
+def _quadrant_rect(cx: float, cy: float, quadrant: int) -> list[tuple[float, float]]:
+    """Full viewBox quadrant rectangle (0–100) for quadrant i. 0=top-left, 1=top-right, 2=bottom-right, 3=bottom-left. Use with shape clip so shading reaches boundary."""
+    if quadrant == 0:
+        return [(0, 0), (cx, 0), (cx, cy), (0, cy)]
+    if quadrant == 1:
+        return [(cx, 0), (100, 0), (100, cy), (cx, cy)]
+    if quadrant == 2:
+        return [(cx, cy), (100, cy), (100, 100), (cx, 100)]
+    # quadrant == 3
+    return [(0, cy), (cx, cy), (cx, 100), (0, 100)]
 
 
 def _clip_polygon_to_quadrant(
@@ -874,12 +1408,34 @@ def build_partitioned_sections(
     section_bounds: list[tuple[float, float]],
     section_fills: list[str],
     shape_clip_id: str = "shapeClip",
+    symbol_transform: str | None = None,
+    symbol_path_element: str | None = None,
 ) -> tuple[str, str, list[tuple[float, float, float, float]]]:
-    """Build defs, fill group XML, and partition separator lines (x1,y1,x2,y2) for thin strokes. Guide §3.9."""
+    """Build defs, fill group XML, and partition separator lines (x1,y1,x2,y2). Guide §3.9. For symbol containers, symbol_path_element is the template <path .../> from the file; symbol_transform wraps it when present."""
     x_min, x_max, y_min, y_max = bbox
+    cx_bbox = (x_min + x_max) / 2.0
+    cy_bbox = (y_min + y_max) / 2.0
+    # Normalize to CCW so _clip_segment_to_polygon (and band clipping) treats interior correctly; symbol paths are often clockwise.
+    if vertices and len(vertices) >= 3:
+        vertices = _ensure_ccw(vertices)
     solid = {"solid_black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white": "none"}
     hatch_keys = ("diagonal_slash", "diagonal_backslash", "horizontal_lines", "vertical_lines")
-    defs_parts: list[str] = [f'  <defs><clipPath id="{shape_clip_id}"><path d="{path_d}"/></clipPath></defs>']
+    # ClipPath: use path in viewBox space so clipping works (transform inside clipPath can be unreliable, e.g. times = rotated plus).
+    rot = _parse_rotate_transform(symbol_transform) if symbol_transform else None
+    if rot is not None and vertices and len(vertices) >= 3:
+        # Use rotated vertices (already in viewBox space) so clip matches shape; _rotate_path_d arc handling is wrong for curved paths.
+        path_el = f'<path d="{_polygon_path_d(vertices)}"/>'
+    elif rot is not None:
+        angle, rcx, rcy = rot
+        display_path_d = _rotate_path_d(path_d, angle, rcx, rcy)
+        path_el = f'<path d="{display_path_d}"/>'
+    elif symbol_path_element:
+        path_el = symbol_path_element
+    else:
+        path_el = f'<path d="{path_d}"/>'
+    if rot is None and symbol_transform:
+        path_el = f'<g transform="{symbol_transform}">{path_el}</g>'
+    defs_parts: list[str] = [f'  <defs><clipPath id="{shape_clip_id}">{path_el}</clipPath></defs>']
     fill_parts: list[str] = []
     partition_lines: list[tuple[float, float, float, float]] = []
 
@@ -890,8 +1446,7 @@ def build_partitioned_sections(
             y_hi = y_min + (y_max - y_min) * hi / 100.0
             if i + 1 < len(section_bounds):
                 if vertices and len(vertices) >= 3:
-                    for seg in _clip_segment_to_polygon(x_min, y_hi, x_max, y_hi, vertices):
-                        partition_lines.append(seg)
+                    partition_lines.append((x_min, y_hi, x_max, y_hi))
                 elif shape == "circle":
                     cx, cy, r = 50.0, 50.0, CIRCLE_RADIUS
                     for seg in _clip_segment_to_circle(cx, cy, r, x_min, y_hi, x_max, y_hi):
@@ -910,8 +1465,8 @@ def build_partitioned_sections(
                         _, hatch_el = hatch_continuous_defs_and_lines(cid, fill_key, section_path)
                         fill_parts.append(hatch_el)
             else:
-                # Fallback: rect clipped by shape
                 h = y_hi - y_lo
+                section_path = f"M 0 {y_lo:.2f} h 100 v {h:.2f} h -100 Z"
                 fill_parts.append(
                     f'  <g clip-path="url(#{shape_clip_id})">'
                     f'<rect x="0" y="{y_lo:.2f}" width="100" height="{h:.2f}" fill="{solid.get(fill_key, "none")}" stroke="none"/>'
@@ -922,8 +1477,7 @@ def build_partitioned_sections(
             x_hi = x_min + (x_max - x_min) * hi / 100.0
             if i + 1 < len(section_bounds):
                 if vertices and len(vertices) >= 3:
-                    for seg in _clip_segment_to_polygon(x_hi, y_min, x_hi, y_max, vertices):
-                        partition_lines.append(seg)
+                    partition_lines.append((x_hi, y_min, x_hi, y_max))
                 elif shape == "circle":
                     cx, cy, r = 50.0, 50.0, CIRCLE_RADIUS
                     for seg in _clip_segment_to_circle(cx, cy, r, x_hi, y_min, x_hi, y_max):
@@ -943,27 +1497,22 @@ def build_partitioned_sections(
                         fill_parts.append(hatch_el)
             else:
                 w = x_hi - x_lo
+                section_path = f"M {x_lo:.2f} 0 v 100 h {w:.2f} v -100 Z"
                 fill_parts.append(
                     f'  <g clip-path="url(#{shape_clip_id})">'
                     f'<rect x="{x_lo:.2f}" y="0" width="{w:.2f}" height="100" fill="{solid.get(fill_key, "none")}" stroke="none"/>'
                     "</g>"
                 )
         elif partition_direction == "diagonal_slash":
-            # 0 = (x_min,y_min), 100 = (x_max,y_max); level = (x+y)
             sum_lo = (x_min + y_min) + ((x_max + y_max) - (x_min + y_min)) * lo / 100.0
             sum_hi = (x_min + y_min) + ((x_max + y_max) - (x_min + y_min)) * hi / 100.0
             if i + 1 < len(section_bounds):
-                # Partition line: segment x+y=sum_hi clipped to bbox
                 px1 = max(x_min, min(x_max, sum_hi - y_max))
                 py1 = sum_hi - px1
                 px2 = min(x_max, max(x_min, sum_hi - y_min))
                 py2 = sum_hi - px2
                 if abs(px2 - px1) + abs(py2 - py1) > 0.1:
-                    if vertices and len(vertices) >= 3:
-                        for seg in _clip_segment_to_polygon(px1, py1, px2, py2, vertices):
-                            partition_lines.append(seg)
-                    else:
-                        partition_lines.append((px1, py1, px2, py2))
+                    partition_lines.append((px1, py1, px2, py2))
             if vertices and len(vertices) >= 3:
                 s_lo, s_hi = min(sum_lo, sum_hi), max(sum_lo, sum_hi)
                 clip_verts = _clip_polygon_to_diagonal_slash_band(vertices, s_lo, s_hi)
@@ -977,25 +1526,18 @@ def build_partitioned_sections(
                         _, hatch_el = hatch_continuous_defs_and_lines(cid, fill_key, section_path)
                         fill_parts.append(hatch_el)
         elif partition_direction == "diagonal_backslash":
-            # 0 = (x_max,y_min), 100 = (x_min,y_max); level = (x - y)
             diff_min = x_max - y_min
             diff_max = x_min - y_max
             diff_lo = diff_min + (diff_max - diff_min) * lo / 100.0
             diff_hi = diff_min + (diff_max - diff_min) * hi / 100.0
             if i + 1 < len(section_bounds):
-                # Partition line: segment x-y=diff_hi clipped to bbox
                 px1 = max(x_min, min(x_max, diff_hi + y_min))
                 py1 = px1 - diff_hi
                 px2 = max(x_min, min(x_max, diff_hi + y_max))
                 py2 = px2 - diff_hi
                 if abs(px2 - px1) + abs(py2 - py1) > 0.1:
-                    if vertices and len(vertices) >= 3:
-                        for seg in _clip_segment_to_polygon(px1, py1, px2, py2, vertices):
-                            partition_lines.append(seg)
-                    else:
-                        partition_lines.append((px1, py1, px2, py2))
+                    partition_lines.append((px1, py1, px2, py2))
             if vertices and len(vertices) >= 3:
-                # (x-y) decreases from 0% to 100%, so diff_lo > diff_hi; band needs k_lo <= k_hi
                 k_lo, k_hi = min(diff_lo, diff_hi), max(diff_lo, diff_hi)
                 clip_verts = _clip_polygon_to_diagonal_backslash_band(vertices, k_lo, k_hi)
                 if clip_verts:
@@ -1013,14 +1555,12 @@ def build_partitioned_sections(
             r_lo = r * lo / 100.0
             r_hi = r * hi / 100.0
             if i + 1 < len(section_bounds):
-                # Partition line: circle at r_hi
                 n_pts = 32
                 for k in range(n_pts):
                     t0 = 2 * math.pi * k / n_pts
                     t1 = 2 * math.pi * (k + 1) / n_pts
-                    partition_lines.append(
-                        (cx + r_hi * math.cos(t0), cy + r_hi * math.sin(t0), cx + r_hi * math.cos(t1), cy + r_hi * math.sin(t1))
-                    )
+                    seg = (cx + r_hi * math.cos(t0), cy + r_hi * math.sin(t0), cx + r_hi * math.cos(t1), cy + r_hi * math.sin(t1))
+                    partition_lines.append(seg)
             if r_lo < 1e-6:
                 section_path = f"M {cx} {cy - r_hi} A {r_hi} {r_hi} 0 0 1 {cx} {cy + r_hi} A {r_hi} {r_hi} 0 0 1 {cx} {cy - r_hi} Z"
             else:
@@ -1029,24 +1569,62 @@ def build_partitioned_sections(
                 fill_parts.append(f'  <path d="{section_path}" fill="{solid[fill_key]}" stroke="none" fill-rule="evenodd"/>')
             else:
                 cid = f"{shape_clip_id}_sec{i}"
-                # Ring path (outer+inner) needs clip-rule="evenodd" so hatch is clipped to the band only
                 clip_rule = ' clip-rule="evenodd"' if r_lo >= 1e-6 else ""
                 defs_parts.append(f'  <defs><clipPath id="{cid}"{clip_rule}><path d="{section_path}"/></clipPath></defs>')
                 _, hatch_el = hatch_continuous_defs_and_lines(cid, fill_key, section_path)
                 fill_parts.append(hatch_el)
-        elif partition_direction == "segmented":
-            # Radial segments from centre. Guide §3.9: circle any N; regular polygon when N divides sides; irregular exactly 4 (quadrants).
-            num_segments = len(section_bounds)
+        elif partition_direction == "radial":
+            num_sections = len(section_bounds)
             if shape == "circle":
                 cx, cy, r = 50.0, 50.0, CIRCLE_RADIUS
                 angle_north = -math.pi / 2
-                angle_i = angle_north + i * 2 * math.pi / num_segments
-                angle_i1 = angle_north + (i + 1) * 2 * math.pi / num_segments
-                if i + 1 < num_segments:
+                angle_i = angle_north + i * 2 * math.pi / num_sections
+                angle_i1 = angle_north + (i + 1) * 2 * math.pi / num_sections
+                if i + 1 < num_sections:
                     x1 = cx + r * math.cos(angle_i1)
                     y1 = cy + r * math.sin(angle_i1)
                     partition_lines.append((cx, cy, x1, y1))
-                elif i == num_segments - 1:
+                elif i == num_sections - 1:
+                    partition_lines.append((cx, cy, cx + r * math.cos(angle_north), cy + r * math.sin(angle_north)))
+                section_path = _circle_wedge_path(cx, cy, r, angle_i, angle_i1)
+                if fill_key in solid:
+                    fill_parts.append(f'  <path d="{section_path}" fill="{solid[fill_key]}" stroke="none"/>')
+                else:
+                    cid = f"{shape_clip_id}_sec{i}"
+                    defs_parts.append(f'  <defs><clipPath id="{cid}"><path d="{section_path}"/></clipPath></defs>')
+                    _, hatch_el = hatch_continuous_defs_and_lines(cid, fill_key, section_path)
+                    fill_parts.append(hatch_el)
+            elif shape == "semicircle":
+                cx, cy = 50.0, 67.5
+                r = SEMICIRCLE_RADIUS
+                angle_start = math.pi
+                angle_i = angle_start + i * math.pi / num_sections
+                angle_i1 = angle_start + (i + 1) * math.pi / num_sections
+                if i + 1 < num_sections:
+                    x1 = cx + r * math.cos(angle_i1)
+                    y1 = cy + r * math.sin(angle_i1)
+                    partition_lines.append((cx, cy, x1, y1))
+                elif i == num_sections - 1:
+                    partition_lines.append((cx, cy, cx + r * math.cos(angle_start), cy + r * math.sin(angle_start)))
+                section_path = _circle_wedge_path(cx, cy, r, angle_i, angle_i1)
+                if fill_key in solid:
+                    fill_parts.append(f'  <path d="{section_path}" fill="{solid[fill_key]}" stroke="none"/>')
+                else:
+                    cid = f"{shape_clip_id}_sec{i}"
+                    defs_parts.append(f'  <defs><clipPath id="{cid}"><path d="{section_path}"/></clipPath></defs>')
+                    _, hatch_el = hatch_continuous_defs_and_lines(cid, fill_key, section_path)
+                    fill_parts.append(hatch_el)
+            elif shape == "star" and num_sections == 5 and vertices and len(vertices) >= 3:
+                cx, cy = _polygon_centroid(vertices)
+                r = max(math.hypot(v[0] - cx, v[1] - cy) for v in vertices)
+                angle_north = -math.pi / 2
+                angle_i = angle_north + i * 2 * math.pi / 5
+                angle_i1 = angle_north + (i + 1) * 2 * math.pi / 5
+                if i + 1 < 5:
+                    x1 = cx + r * math.cos(angle_i1)
+                    y1 = cy + r * math.sin(angle_i1)
+                    partition_lines.append((cx, cy, x1, y1))
+                elif i == 4:
                     partition_lines.append((cx, cy, cx + r * math.cos(angle_north), cy + r * math.sin(angle_north)))
                 section_path = _circle_wedge_path(cx, cy, r, angle_i, angle_i1)
                 if fill_key in solid:
@@ -1059,12 +1637,11 @@ def build_partitioned_sections(
             elif vertices and len(vertices) >= 3:
                 cx, cy = _polygon_centroid(vertices)
                 sides = len(vertices)
-                if shape in ("triangle", "square", "pentagon", "hexagon", "heptagon", "octagon") and sides % num_segments == 0:
-                    step = sides // num_segments
+                if shape in ("triangle", "square", "pentagon", "hexagon", "heptagon", "octagon") and sides % num_sections == 0:
+                    step = sides // num_sections
                     idx0 = (i * step) % sides
                     idx1 = (i * step + 1) % sides
                     v0, v1 = vertices[idx0], vertices[idx1]
-                    # Radial line from centre to end of wedge (v1); add for every segment so the last wedge gets its closing line too
                     partition_lines.append((cx, cy, v1[0], v1[1]))
                     section_path = f"M {cx:.2f} {cy:.2f} L {v0[0]:.2f} {v0[1]:.2f} L {v1[0]:.2f} {v1[1]:.2f} Z"
                     if fill_key in solid:
@@ -1075,17 +1652,17 @@ def build_partitioned_sections(
                         _, hatch_el = hatch_continuous_defs_and_lines(cid, fill_key, section_path)
                         fill_parts.append(hatch_el)
                 else:
-                    if num_segments != 4:
-                        raise ValueError("Segmented partition for irregular shape requires exactly 4 sections.")
+                    if num_sections != 4:
+                        raise ValueError("Radial partition for irregular shape requires exactly 4 sections.")
                     if i == 0:
-                        for seg in _clip_segment_to_polygon(cx, y_min, cx, y_max, vertices):
-                            partition_lines.append(seg)
-                        for seg in _clip_segment_to_polygon(x_min, cy, x_max, cy, vertices):
-                            partition_lines.append(seg)
-                    clip_verts = _clip_polygon_to_quadrant(vertices, cx, cy, i)
-                    if not clip_verts:
-                        continue
-                    section_path = _polygon_path_d(clip_verts)
+                        partition_lines.append((cx, 0, cx, 100))
+                        partition_lines.append((0, cy, 100, cy))
+                    if i == 1:
+                        partition_lines.append((0, cy, 100, cy))
+                    if i == 2:
+                        partition_lines.append((cx, 0, cx, 100))
+                    quad_verts = _quadrant_rect(cx, cy, i)
+                    section_path = _polygon_path_d(quad_verts)
                     if fill_key in solid:
                         fill_parts.append(f'  <path d="{section_path}" fill="{solid[fill_key]}" stroke="none"/>')
                     else:
@@ -1095,13 +1672,45 @@ def build_partitioned_sections(
                         fill_parts.append(hatch_el)
             else:
                 raise ValueError("Segmented partition requires circle or polygon shape.")
+        elif partition_direction == "concentric" and shape in SHAPES_SYMBOLS:
+            scale_cx, scale_cy = cx_bbox, cy_bbox
+            scale_lo = lo / 100.0
+            scale_hi = hi / 100.0
+            rot = _parse_rotate_transform(symbol_transform)
+            display_path_d = _rotate_path_d(path_d, rot[0], rot[1], rot[2]) if rot else path_d
+            outer_d = _scale_path_d(display_path_d, scale_cx, scale_cy, scale_hi)
+            inner_d = _scale_path_d(display_path_d, scale_cx, scale_cy, scale_lo)
+            def esc(s: str) -> str:
+                return s.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+            outer_el = f'<path d="{esc(outer_d)}"/>'
+            inner_el = f'<path d="{esc(inner_d)}"/>'
+            if i + 1 < len(section_bounds) and vertices and len(vertices) >= 3:
+                inner_verts = _scaled_polygon_vertices(vertices, scale_cx, scale_cy, scale_hi)
+                for j in range(len(inner_verts)):
+                    a = inner_verts[j]
+                    b = inner_verts[(j + 1) % len(inner_verts)]
+                    partition_lines.append((a[0], a[1], b[0], b[1]))
+            cid = f"{shape_clip_id}_sec{i}"
+            if scale_lo < 1e-6:
+                defs_parts.append(f'  <defs><clipPath id="{cid}">{outer_el}</clipPath></defs>')
+            else:
+                clip_rule = ' clip-rule="evenodd"'
+                defs_parts.append(
+                    f'  <defs><clipPath id="{cid}"{clip_rule}>{outer_el}{inner_el}</clipPath></defs>'
+                )
+            section_path_d = outer_d if scale_lo < 1e-6 else (outer_d + " " + inner_d)
+            fill_color = "#fff" if (fill_key == "white" and scale_lo < 1e-6) else solid.get(fill_key, "none")
+            fill_el = (
+                f'  <rect x="0" y="0" width="100" height="100" fill="{fill_color}" stroke="none" clip-path="url(#{cid})"/>'
+                if fill_key in solid
+                else hatch_continuous_defs_and_lines(cid, fill_key, "")[1]
+            )
+            fill_parts.insert(0, fill_el)
         elif partition_direction == "concentric" and vertices and len(vertices) >= 3:
-            # Polygon concentric: scaled copy of shape inside itself (0 = centre, 100 = outer)
             cx, cy = _polygon_centroid(vertices)
             scale_lo = lo / 100.0
             scale_hi = hi / 100.0
             if i + 1 < len(section_bounds):
-                # Partition line: inner polygon boundary at scale_hi
                 inner_verts = _scaled_polygon_vertices(vertices, cx, cy, scale_hi)
                 for j in range(len(inner_verts)):
                     a = inner_verts[j]
@@ -1115,7 +1724,6 @@ def build_partitioned_sections(
                 fill_parts.append(f'  <path d="{section_path}" fill="{solid[fill_key]}" stroke="none" fill-rule="evenodd"/>')
             else:
                 cid = f"{shape_clip_id}_sec{i}"
-                # Ring path (outer+inner) needs clip-rule="evenodd" so hatch is clipped to the band only
                 clip_rule = ' clip-rule="evenodd"' if scale_lo >= 1e-6 else ""
                 defs_parts.append(f'  <defs><clipPath id="{cid}"{clip_rule}><path d="{section_path}"/></clipPath></defs>')
                 _, hatch_el = hatch_continuous_defs_and_lines(cid, fill_key, section_path)
@@ -1164,13 +1772,14 @@ def hatch_continuous_defs_and_lines(clip_id: str, fill_key: str, path_d: str) ->
 
 
 def build_svg(
-    symbol_content: str,
+    motif_content: str,
     positions: list[tuple[float, float]],
-    symbol_name: str,
+    motif_name: str,
     shape: str,
     path_d: str,
-    fill: str = "#000",
-    stroke: str = "#000",
+    motif_scale: float,
+    motif_tx: float,
+    motif_ty: float,
     line_style: str = "solid",
     polygon_fill: str = "none",
     polygon_fill_defs: str | None = None,
@@ -1180,61 +1789,73 @@ def build_svg(
     partition_defs: str | None = None,
     partition_fill_content: str | None = None,
     partition_lines: list[tuple[float, float, float, float]] | None = None,
+    motif_fill: str = "#000",
+    symbol_transform: str | None = None,
 ) -> str:
-    """Build shape-container SVG. For cross use stroke_lines (12 segments); else path_d_stroke or single path. Partition (guide §3.9) optional."""
+    """Build shape-container SVG. For cross use stroke_lines (12 segments); else path_d_stroke or single path. symbol_transform wraps the shape path when present (e.g. times = plus rotated 45°). Partition (guide §3.9) optional. Motifs are rendered with motif_fill (default black; guide §3.2 allows fill variation)."""
     stroke_dasharray = {"solid": "", "dashed": "8 4", "dotted": "2 4"}.get(line_style, "")
     dash_attr = f' stroke-dasharray="{stroke_dasharray}"' if stroke_dasharray else ""
     is_cross = (shape or "").strip().lower() == "cross"
     fill_rule_attr = ' fill-rule="evenodd"' if is_cross else ""
     is_partitioned = partition_fill_content is not None
 
+    def path_line(fill: str, stroke: str = "stroke-width=\"2\"") -> str:
+        return f'  <path d="{path_d}" fill="{fill}" {stroke} {dash_attr}{fill_rule_attr} />'
+
+    def wrap_shape(content: list[str]) -> list[str]:
+        if symbol_transform:
+            return [f'  <g transform="{symbol_transform}">'] + content + ["  </g>"]
+        return content
+
     lines = [
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">',
-        f"  <!-- {shape} container, {line_style}, fill; {len(positions)} {symbol_name} symbols -->",
+        f"  <!-- {shape} container, {line_style}, fill; {len(positions)} {motif_name} motifs -->",
     ]
     if partition_defs:
         lines.append(partition_defs)
     elif polygon_fill_defs:
         lines.append(polygon_fill_defs)
     if partition_fill_content:
-        # Draw shape outline first (underneath) so segment fills extend to the boundary on top
         if stroke_lines is not None:
-            lines.append(f'  <path d="{path_d}" fill="none" stroke="none"{fill_rule_attr} />')
-            for x1, y1, x2, y2 in stroke_lines:
-                lines.append(f'  <line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke-width="2"{dash_attr} />')
+            lines.extend(wrap_shape([path_line("none", "stroke=\"none\"")]) + [f'  <line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke-width="2"{dash_attr} />' for x1, y1, x2, y2 in stroke_lines])
         else:
-            lines.append(f'  <path d="{path_d}" fill="none" stroke-width="2"{dash_attr}{fill_rule_attr} />')
+            lines.extend(wrap_shape([path_line("none")]))
+        # Clip section fills to shape (e.g. star radial wedges extend as circle sectors; shapeClip clips them)
+        lines.append('  <g clip-path="url(#shapeClip)">')
         lines.append(partition_fill_content)
-        # Clip partition lines to shape so they (and their stroke) do not extend beyond the boundary
+        lines.append("  </g>")
+        # Draw shape outline again so the border is the usual thickness (not hidden by dark fills).
+        if stroke_lines is not None:
+            lines.extend([f'  <line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke-width="2"{dash_attr} />' for x1, y1, x2, y2 in stroke_lines])
+        else:
+            lines.extend(wrap_shape([path_line("none")]))
         if partition_lines:
             lines.append('  <g clip-path="url(#shapeClip)">')
             for x1, y1, x2, y2 in partition_lines:
                 lines.append(f'  <line x1="{x1:.2f}" y1="{y1:.2f}" x2="{x2:.2f}" y2="{y2:.2f}" stroke="#000" stroke-width="{PARTITION_LINE_STROKE}" stroke-linecap="round"/>')
             lines.append("  </g>")
-        # Draw shape outline again on top so the border is always the usual thickness (not hidden by dark fills)
-        if stroke_lines is not None:
-            for x1, y1, x2, y2 in stroke_lines:
-                lines.append(f'  <line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke-width="2"{dash_attr} />')
-        else:
-            lines.append(f'  <path d="{path_d}" fill="none" stroke-width="2"{dash_attr}{fill_rule_attr} />')
     elif polygon_hatch_lines:
         lines.append(polygon_hatch_lines)
     if not is_partitioned:
         if stroke_lines is not None:
             # Cross: fill path then 12 explicit lines so outline is never interpreted as a square
-            lines.append(f'  <path d="{path_d}" fill="{polygon_fill}" stroke="none"{fill_rule_attr} />')
+            lines.append(path_line(polygon_fill, "stroke=\"none\""))
             for x1, y1, x2, y2 in stroke_lines:
                 lines.append(f'  <line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke-width="2"{dash_attr} />')
         elif path_d_stroke is not None:
-            lines.append(f'  <path d="{path_d}" fill="{polygon_fill}" stroke="none"{fill_rule_attr} />')
+            lines.append(path_line(polygon_fill, "stroke=\"none\""))
             lines.append(
                 f'  <path d="{path_d_stroke}" fill="none" stroke-width="2" stroke-linejoin="miter" stroke-linecap="butt"{dash_attr} />'
             )
         else:
-            lines.append(f'  <path d="{path_d}" fill="{polygon_fill}" stroke-width="2"{dash_attr}{fill_rule_attr} />')
+            lines.extend(wrap_shape([path_line(polygon_fill)]))
+    # Motifs: fill and stroke per --motif-fill. White motifs = white fill, black outline; black motifs = black fill and stroke.
+    motif_stroke = "#000" if motif_fill == "#fff" else motif_fill
+    motif_fill_override = re.compile(r'\bfill="none"', re.IGNORECASE)
     for cx, cy in positions:
-        lines.append(f'  <g transform="translate({cx:.2f}, {cy:.2f}) scale({SYMBOL_SCALE}) translate(-5,-5)" fill="{fill}" stroke="{stroke}">')
-        for line in symbol_content.split("\n"):
+        lines.append(f'  <g transform="translate({cx:.2f}, {cy:.2f}) scale({motif_scale:.4f}) translate({motif_tx:.2f},{motif_ty:.2f})" fill="{motif_fill}" stroke="{motif_stroke}">')
+        for line in motif_content.split("\n"):
+            line = motif_fill_override.sub(f'fill="{motif_fill}"', line)
             lines.append("    " + line)
         lines.append("  </g>")
     lines.append("</svg>")
@@ -1243,15 +1864,18 @@ def build_svg(
 
 def main() -> None:
     script_dir = Path(__file__).resolve().parent
+    # When run from lib/, nvr-symbols is at repo root (parent of sample-nvr-odd-one-out).
+    _repo_root = script_dir.parent.parent if script_dir.name == "lib" else script_dir.parent
+    default_motifs_dir = _repo_root / "nvr-symbols"
     parser = argparse.ArgumentParser(
-        description="Generate a shape-container SVG (optionally with symbols inside). Use --empty for container only."
+        description="Generate a shape-container SVG (optionally with motifs inside). Use --empty for container only."
     )
     parser.add_argument(
-        "symbol",
+        "motif",
         type=str,
         nargs="?",
         default=None,
-        help="Symbol type (e.g. club, heart). Required unless --empty.",
+        help="Motif type (e.g. club, heart). Required unless --empty. Loads shape-{motif}.svg from --motifs-dir.",
     )
     parser.add_argument(
         "-o", "--output",
@@ -1264,24 +1888,24 @@ def main() -> None:
         type=int,
         default=10,
         metavar="N",
-        help="Number of symbols inside (default: 10). Ignored if --empty.",
+        help="Number of motifs inside (default: 10). Ignored if --empty.",
     )
     parser.add_argument(
         "--seed",
         type=int,
         default=None,
-        help="Random seed for symbol placement.",
+        help="Random seed for motif placement.",
     )
     parser.add_argument(
         "--empty",
         action="store_true",
-        help="Output only the shape container (no symbols). For use as part of a larger drawing.",
+        help="Output only the shape container (no motifs). For use as part of a larger drawing.",
     )
     parser.add_argument(
-        "--symbols-dir",
+        "--motifs-dir",
         type=Path,
-        default=script_dir.parent / "nvr-symbols",
-        help="Directory containing symbol SVGs.",
+        default=default_motifs_dir,
+        help="Directory containing motif SVGs (shape-{motif}.svg).",
     )
     parser.add_argument(
         "--shape",
@@ -1302,10 +1926,17 @@ def main() -> None:
         type=str,
         default="white",
         choices=[
-            "solid_black", "grey", "grey_light", "white",
+            "solid_black", "grey", "grey_light", "white", "white_fill",
             "diagonal_slash", "diagonal_backslash", "horizontal_lines", "vertical_lines",
         ],
-        help="Shape fill / shading.",
+        help="Shape fill / shading. white = none (unshaded); white_fill = solid #fff.",
+    )
+    parser.add_argument(
+        "--motif-fill",
+        type=str,
+        default="black",
+        choices=["black", "white"],
+        help="Fill (and stroke) for motifs inside the shape. Default: black (guide §3.2). Use white for light-on-dark or asset checks.",
     )
     parser.add_argument(
         "--layout-symmetry",
@@ -1313,14 +1944,14 @@ def main() -> None:
         default=None,
         choices=["vertical", "horizontal", "diagonal_slash", "diagonal_backslash"],
         metavar="LINE",
-        help="Force symbol layout symmetry about a line (guide §3.9). vertical (|), horizontal (-), diagonal_slash (/), diagonal_backslash (\\). Default: no symmetry.",
+        help="Force motif layout symmetry about a line (guide §3.9). vertical (|), horizontal (-), diagonal_slash (/), diagonal_backslash (\\). Default: no symmetry.",
     )
     parser.add_argument(
         "--partition",
         type=str,
         default=None,
-        choices=["horizontal", "vertical", "diagonal_slash", "diagonal_backslash", "concentric", "segmented"],
-        help="Partition the shape into sections (guide §3.9). segmented = radial wedges. No symbols when partitioned unless --partition-symbols is set.",
+        choices=["horizontal", "vertical", "diagonal_slash", "diagonal_backslash", "concentric", "radial"],
+        help="Partition the shape into sections (guide §3.9). radial = radial sections (wedges). No motifs when partitioned unless --partition-motifs is set.",
     )
     parser.add_argument(
         "--partition-sections",
@@ -1334,15 +1965,15 @@ def main() -> None:
         type=str,
         default=None,
         metavar="FILLS",
-        help="Comma-separated fill keys per section (cycle if fewer than sections), e.g. white,grey,diagonal_slash.",
+        help="Comma-separated fill keys per section (cycle if fewer than sections), e.g. white,grey,null,diagonal_slash. null = section not drawn (guide §3.9).",
     )
     args = parser.parse_args()
     args.shape = (args.shape or "square").strip().lower()
 
-    if not args.empty and args.symbol is None and not args.partition:
-        raise SystemExit("Symbol is required unless --empty or --partition.")
+    if not args.empty and args.motif is None and not args.partition:
+        raise SystemExit("Motif is required unless --empty or --partition.")
 
-    vertices, path_d, path_d_stroke, stroke_lines = get_shape_geometry(args.shape)
+    vertices, path_d, path_d_stroke, stroke_lines, symbol_transform, symbol_path_element = get_shape_geometry(args.shape, args.motifs_dir)
     bbox = get_shape_bbox(args.shape, vertices, path_d)
 
     # Partition (guide §3.9): section bounds and fills
@@ -1353,49 +1984,53 @@ def main() -> None:
             pass  # circle concentric uses circle-specific path
         elif args.partition == "concentric" and not (vertices and len(vertices) >= 3):
             raise SystemExit("Concentric partition requires circle or a polygon shape.")
-        if args.partition == "segmented":
-            if args.shape == "semicircle":
-                raise SystemExit("Segmented partition for semicircle is not yet implemented.")
-            if not vertices and args.shape != "circle":
-                raise SystemExit("Segmented partition requires circle or a polygon shape.")
+        if args.partition == "radial":
+            if not vertices and args.shape not in ("circle", "semicircle"):
+                raise SystemExit("Radial partition requires circle or a polygon shape.")
         if args.partition_sections:
             parts = [float(p.strip()) for p in args.partition_sections.split(",")]
             if len(parts) < 2 or parts[0] != 0 or parts[-1] != 100:
                 raise SystemExit("--partition-sections must be like 0,50,100 (start 0, end 100).")
             section_bounds = [(parts[i], parts[i + 1]) for i in range(len(parts) - 1)]
         else:
-            section_bounds = even_section_bounds(4 if args.partition == "segmented" else 2)
-        if args.partition == "segmented" and vertices and len(vertices) >= 3:
-            num_seg = len(section_bounds)
+            section_bounds = even_section_bounds(4 if args.partition == "radial" else 2)
+        if args.partition == "radial" and vertices and len(vertices) >= 3:
+            num_radial = len(section_bounds)
             sides = len(vertices)
             if args.shape in ("triangle", "square", "pentagon", "hexagon", "heptagon", "octagon"):
-                if sides % num_seg != 0:
+                if sides % num_radial != 0:
                     raise SystemExit(
-                        f"Segmented partition: for regular polygon with {sides} sides, number of segments ({num_seg}) must divide {sides}."
+                        f"Radial partition: for regular polygon with {sides} sides, number of radial sections ({num_radial}) must divide {sides}."
                     )
-            elif num_seg != 4:
-                raise SystemExit("Segmented partition for irregular shape requires exactly 4 sections (0,25,50,75,100).")
+            elif args.shape == "semicircle":
+                pass  # any number of radial sections allowed
+            elif args.shape == "star" and num_radial == 5:
+                pass  # star has rotational symmetry order 5 (guide §3.9)
+            elif num_radial != 4:
+                raise SystemExit("Radial partition for irregular shape requires exactly 4 sections (0,25,50,75,100).")
         section_fills = (args.section_fills or "white,grey").replace(" ", "").split(",")
         try:
             partition_defs, partition_fill_content, partition_lines = build_partitioned_sections(
-                args.shape, path_d, vertices, bbox, args.partition, section_bounds, section_fills
+                args.shape, path_d, vertices, bbox, args.partition, section_bounds, section_fills,
+                symbol_transform=symbol_transform,
+                symbol_path_element=symbol_path_element,
             )
         except ValueError as e:
             raise SystemExit(str(e))
         polygon_fill = "none"
         polygon_fill_defs = None
         polygon_hatch_lines = None
-        symbol_content = ""
-        symbol_fill = "#000"
-        symbol_stroke = "#000"
-        symbol_name = "none"
+        motif_content = ""
+        motif_scale = 1.25
+        motif_tx = motif_ty = -5.0
+        motif_name = "none"
         positions = []
     else:
         partition_defs = None
         partition_fill_content = None
         partition_lines = None
 
-    solid_fills = {"solid_black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white": "none"}
+    solid_fills = {"solid_black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white": "none", "white_fill": "#fff"}
     hatch_keys = ("diagonal_slash", "diagonal_backslash", "horizontal_lines", "vertical_lines")
     if not args.partition:
         if args.fill in solid_fills:
@@ -1412,17 +2047,17 @@ def main() -> None:
 
     if args.empty or args.partition:
         if not args.partition:
-            symbol_content = ""
-            symbol_fill = "#000"
-            symbol_stroke = "#000"
-            symbol_name = "none"
+            motif_content = ""
+            motif_scale = 1.25
+            motif_tx = motif_ty = -5.0
+            motif_name = "none"
             positions = []
     else:
-        symbol_path = args.symbols_dir / f"{args.symbol}.svg"
-        if not symbol_path.exists():
-            raise SystemExit(f"Symbol file not found: {symbol_path}")
-        symbol_content, symbol_fill, symbol_stroke = load_symbol_content(symbol_path)
-        symbol_name = args.symbol
+        motif_path = args.motifs_dir / f"shape-{args.motif}.svg"
+        if not motif_path.exists():
+            raise SystemExit(f"Motif file not found: {motif_path}")
+        motif_content, motif_scale, motif_tx, motif_ty = load_motif_content(motif_path)
+        motif_name = args.motif
 
         def inside_check(cx: float, cy: float) -> bool:
             if args.shape == "circle":
@@ -1476,23 +2111,25 @@ def main() -> None:
                 bounds,
             )
         else:
-            # Cross: sample only from the five rectangles so symbols never land in the missing corners
+            # Cross: sample only from the five rectangles so motifs never land in the missing corners
             sample_pt = _cross_sample_point if args.shape == "cross" else None
             cross_attempts = 8000 if args.shape == "cross" else None  # cross has tight regions, need more tries
             positions = random_positions(
                 args.count, seed=args.seed, inside_check=inside_check, bounds=bounds, sample_point=sample_pt, max_attempts=cross_attempts
             )
 
+    motif_fill_hex = "#000" if args.motif_fill == "black" else "#fff"
     svg = build_svg(
-        symbol_content,
+        motif_content,
         positions,
-        symbol_name,
+        motif_name,
         shape=args.shape,
         path_d=path_d,
+        motif_scale=motif_scale,
+        motif_tx=motif_tx,
+        motif_ty=motif_ty,
         path_d_stroke=path_d_stroke,
         stroke_lines=stroke_lines,
-        fill=symbol_fill,
-        stroke=symbol_stroke,
         line_style=args.line_style,
         polygon_fill=polygon_fill,
         polygon_fill_defs=polygon_fill_defs,
@@ -1500,25 +2137,27 @@ def main() -> None:
         partition_defs=partition_defs,
         partition_fill_content=partition_fill_content,
         partition_lines=partition_lines,
+        motif_fill=motif_fill_hex,
+        symbol_transform=symbol_transform,
     )
 
     out = args.output
     if out is None:
-        out_dir = script_dir / "output"
+        out_dir = (script_dir.parent / "output") if script_dir.name == "lib" else (script_dir / "output")
         out_dir.mkdir(parents=True, exist_ok=True)
         if args.partition:
             out = out_dir / f"partition-{args.shape}-{args.partition}.svg"
         elif args.empty:
             out = out_dir / f"shape-{args.shape}.svg"
         else:
-            out_name = {"club": "clubs", "spade": "spades"}.get(args.symbol, args.symbol)
+            out_name = {"club": "clubs", "spade": "spades"}.get(args.motif, args.motif)
             out = out_dir / f"option-{args.shape}-{args.count}-{out_name}.svg"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(svg, encoding="utf-8")
     if args.empty:
         print(f"Wrote {out} (shape only).")
     else:
-        print(f"Wrote {out} ({len(positions)} symbols).")
+        print(f"Wrote {out} ({len(positions)} motifs).")
 
 
 if __name__ == "__main__":
