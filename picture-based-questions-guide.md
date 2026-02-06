@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes how **picture-based questions** work in the 11+ practice platform: how they are stored in the database, where images live, and how to add both questions and pictures so the website can display them. For **NVR-style diagram questions**, it also defines a **consistent vector format (SVG)** and a **visual vocabulary** (symbols, line types, line terminations) so that diagrams look the same across questions and verbal descriptions can be used to generate pictorial assets (section 2–4).
+This document describes how **picture-based questions** work in the 11+ practice platform: how they are stored in the database, where images live, and how to add both questions and pictures so the website can display them. For **NVR-style diagram questions**, it also defines a **consistent vector format (SVG)** and a **visual vocabulary** (symbols, line types, line terminations) so that diagrams look the same across questions and verbal descriptions can be used to generate pictorial assets (section 2–3).
 
 The schema already supports images via **URLs** only (no binary data in the database). See **11plus-datamodel-design.md** → "Image support" for the column definitions.
 
@@ -31,7 +31,7 @@ The schema already supports images via **URLs** only (no binary data in the data
 - **Image options:** Set `option_image_url` on one or more `answer_options` (e.g. "Which diagram shows …?" with four diagram URLs). `option_text` can be empty, a label, or a fallback.
 - **Mixed:** Question has `question_image_url` and some options have `option_image_url` and/or `option_text`.
 
-The **website** will show an `<img>` when a URL is present (see section 8).
+The **website** will show an `<img>` when a URL is present (see section 7).
 
 ---
 
@@ -51,79 +51,81 @@ Diagrams across multiple questions must make **consistent choices** so that:
 - The same concept (e.g. `circle`, `dashed`) looks the same in every question.
 - Authors and AI refer to a single **visual vocabulary** (symbols, line types, line terminations) so verbal descriptions map unambiguously to pictures.
 
-All diagram authoring and AI-assisted generation must use the **NVR visual vocabulary** (sections 3–4). Do not introduce ad hoc symbols or line styles; extend the dictionaries only when needed and then use the new terms consistently.
+All diagram authoring and AI-assisted generation must use the **NVR visual vocabulary** (section 3). Do not introduce ad hoc symbols or line styles; extend the dictionaries only when needed and then use the new terms consistently.
 
 ---
 
-## 3. Polygon containers
+## 3. NVR visual vocabulary (dictionaries)
 
-**Polygon containers** are the outer shapes that may contain symbols (or other content) in a diagram. Use these names when describing "a square with two `circle`s inside" or "each answer is a regular polygon".
+The following dictionaries define the **only** allowable symbols, line types, line terminations, and shading types for NVR-style diagram questions. Verbal descriptions of questions (and any AI that generates pictorial questions) must reference these by name. **Shape containers** (3.1) are the first dictionary; then symbols, line types, line terminations, line augmentations, and shading types. A shape may be **partitioned** (3.9) into sections with their own shading; symbol layouts may be absent or confined to one partition. For arrangements of multiple shapes with depth, use **shape stacks** (3.8). Generated SVGs must use only these options so that `circle` or `dashed` is identical across questions.
+
+**Vocabulary element** is the generic term for any single entry from these dictionaries: a **shape container** (e.g. `square`, `circle`), a **symbol** (e.g. `circle`, `heart`), a **line type** (e.g. `solid`, `dashed`), a **line termination** (e.g. `arrow_single`, `chevron`), a **line augmentation** (e.g. `circle`, `arrowhead`), or a **shading type** (e.g. `solid_black`, `diagonal_slash`). In this guide, all vocabulary elements are quoted in backticks when used as formal terms, e.g. `circle`, `dashed`, `arrow_single`. When writing a verbal question template, the generator chooses random vocabulary elements and sticks with those same choices for part or all of that question (see section 4).
+
+### 3.1 Shape containers
+
+**Shape containers** are the outer shapes that may contain symbols (or other content) in a diagram. Use these names when describing "a `square` with two `circle`s inside" or "each answer is a regular polygon".
 
 **Regular shape:** A **regular shape** is a **circle** or a **regular polygon** (equal sides and equal angles). When a template or description asks for a "regular polygon" or "regular shape" without specifying the number of sides, a random regular polygon should have **3–8 sides** (triangle through octagon) unless the template specifies otherwise.
 
-**Position in answer image:** Unless the question template explicitly states otherwise (e.g. "offset to the left", "positioned at top"), **containers are centred vertically and horizontally** in the answer image. The polygon (or other outer frame) should be drawn so that its **centre coincides with the centre of the answer viewBox** (e.g. centre at (50, 50) in a 0 0 100 100 viewBox). **Triangles** (with one vertex at the top) are **centred vertically by default**: the vertical centre of the triangle's bounding box should coincide with the centre of the viewBox (e.g. at y = 50 in a 0 0 100 100 viewBox), so the triangle sits symmetrically in the vertical space.
+**Position in answer image:** Unless the question template explicitly states otherwise (e.g. "offset to the left", "positioned at top"), **containers are centred vertically and horizontally** in the answer image. The shape (or other outer frame) should be drawn so that its **centre coincides with the centre of the answer viewBox** (e.g. centre at (50, 50) in a 0 0 100 100 viewBox). **Triangles** (with one vertex at the top) are **centred vertically by default**: the vertical centre of the triangle's bounding box should coincide with the centre of the viewBox (e.g. at y = 50 in a 0 0 100 100 viewBox), so the triangle sits symmetrically in the vertical space.
 
-**Size when containing symbols:** Any polygon that **contains symbols** must be **large enough** so that the required number of symbols fit inside with the specified margin (symbol centres inside the shape, symbol cell half-size clear of the boundary). In particular, **triangles** have less usable interior than squares for a given "radius"; the triangle must be drawn **large enough** (e.g. so its inscribed circle or equivalent usable area can accommodate the symbol count) and **centred** in the viewBox. Generators must use a triangle size that allows the same symbol counts as other shapes (e.g. n between 3 and 6) to be placed without overlap.
+**Size when containing symbols:** Any shape that **contains symbols** must be **large enough** so that the required number of symbols fit inside with the specified margin (symbol centres inside the shape, symbol cell half-size clear of the boundary). In particular, **triangles** have less usable interior than squares for a given "radius"; the triangle must be drawn **large enough** (e.g. so its inscribed circle or equivalent usable area can accommodate the symbol count) and **centred** in the viewBox. Generators must use a triangle size that allows the same symbol counts as other shapes (e.g. n between 3 and 6) to be placed without overlap.
 
-**Regularity:** Polygons are assumed **perfectly regular** (equal sides and equal angles) unless the question template specifies otherwise. For example, "triangle" means equilateral, "pentagon" means regular pentagon. If the template explicitly allows a non-regular shape (e.g. "rectangle" for a long shape), use that; otherwise draw regular polygons only. The table below lists the standard regular polygon keys (3–8 sides) and circle; for a random regular polygon, use 3–8 sides unless the template specifies otherwise.
+#### Regular shapes
+
+**Circle** and **regular polygons** (equal sides and equal angles). Use these keys when the template asks for a "regular shape" or "regular polygon"; for a random regular polygon use 3–8 sides unless the template specifies otherwise.
 
 | Key | Description | Notes |
 |-----|-------------|-------|
+| `circle` | Circle | Curved; use as outer frame when specified |
 | `triangle` | Regular triangle (3 sides) | Equilateral |
-| `square` | Regular square (4 sides) | Same as rectangle with equal sides |
-| `rectangle` | Rectangle (4 sides, two pairs equal) | Not regular unless template says "square"; use when template allows non-square quadrilateral |
+| `square` | Regular square (4 sides) | Regular quadrilateral |
 | `pentagon` | Regular pentagon (5 sides) | |
 | `hexagon` | Regular hexagon (6 sides) | |
 | `heptagon` | Regular heptagon (7 sides) | |
 | `octagon` | Regular octagon (8 sides) | |
-| `circle` | Circle | Curved; use as outer frame when specified |
 
----
+**Regularity:** Unless the question template specifies otherwise, polygons in this table are assumed **perfectly regular**. For example, "triangle" means equilateral, "pentagon" means regular pentagon. Draw regular polygons only when using the regular-shape keys.
 
-## 4. NVR visual vocabulary (dictionaries)
+#### Common irregular shapes
 
-The following dictionaries define the **only** allowable symbols, line types, line terminations, and shading types for NVR-style diagram questions. Verbal descriptions of questions (and any AI that generates pictorial questions) must reference these by name. For **polygon containers** (outer frames), use section 3. Generated SVGs must use only these options so that `circle` or `dashed` is identical across questions.
+Use these when the template explicitly allows or asks for non-regular shapes.
 
-**Vocabulary element** is the generic term for any single entry from these dictionaries: a **symbol** (e.g. `circle`, `heart`), a **line type** (e.g. `solid`, `dashed`), a **line termination** (e.g. `arrow_single`, `chevron`), or a **shading type** (e.g. `solid_black`, `diagonal_slash`). In this guide, all vocabulary elements are quoted in backticks when used as formal terms, e.g. `circle`, `dashed`, `arrow_single`. When writing a verbal question template, the generator chooses random vocabulary elements and sticks with those same choices for part or all of that question (see section 5).
+| Key | Description | Notes |
+|-----|-------------|-------|
+| `right_angled_triangle` | Right-angled triangle | One 90° angle; orientation (which vertex is right) may be specified or random.  Default orientation should have the right angle in the bottom left |
+| `rectangle` | Rectangle (4 sides, two pairs equal) | Not square; use when template allows non-square quadrilateral.  Default orientation should be horizontal with width = 1.6 times height. |
+| `semicircle` | Semicircle | Half of a circle. **Default orientation:** straight line at the bottom (flat edge horizontal, arc on top); vertically centred in the answer image. Flat side may be specified as horizontal or vertical if needed. |
+| `cross` | Cross (+) | 12 sided Cross shape constructed from a square with the corners indented. Default thickness of the branches of the cross should be 70% of the width/height of the containing square |
+| `arrow` | Arrow outline | Arrow shape as container (full 7 sided arrow shape).  Triangular head should be 50% of the width.  Default orientation should be to point right |
 
-### 4.1 Symbol dictionary
+#### Common shapes
+
+A **common shape** is either a **regular shape** or a **common irregular shape** 
+
+### 3.2 Symbol dictionary
 
 Symbols that can appear **inside** shapes, at line ends, or as standalone elements in a diagram. Use the **key** in verbal descriptions and when generating SVG (e.g. "use `circle` for the odd one out").
 
-| Key | Description | Notes / SVG usage |
-|-----|-------------|-------------------|
-| `circle` | Circle filled solid | `<circle>` with `fill` (e.g. black or currentColor) |
-| `cross` | Plus / cross (+) | Two perpendicular lines of equal length crossing at centre |
-| `heart` | Playing card heart (♥) | Standard heart symbol |
-| `diamond` | Playing card diamond (♦) | Rhombus filled |
-| `club` | Playing card club (♣) | Three circles + stem, or simplified club shape |
-| `spade` | Playing card spade (♠) | Inverted heart with stem |
-| `square` | Square filled solid | `<rect>` with fill |
-| `triangle` | Triangle filled solid | `<path>` or `<polygon>` with fill |
-| `star` | Five-pointed star | Filled star |
+| Key | Description | Notes / SVG usage | Lines (default) |
+|-----|-------------|-------------------|-----------------|
+| `circle` | Circle filled solid | `<circle>` with `fill` (e.g. black or currentColor) | `-` `|` `/` `\` |
+| `cross` | Plus / cross (+) | Two perpendicular lines of equal length crossing at centre | `-` `|` |
+| `heart` | Playing card heart (♥) | Standard heart symbol | `|` |
+| `diamond` | Playing card diamond (♦) | Rhombus filled | `|` `-` |
+| `club` | Playing card club (♣) | Three circles + stem, or simplified club shape | `|` |
+| `spade` | Playing card spade (♠) | Inverted heart with stem | `|` |
+| `square` | Square filled solid | `<rect>` with fill | `-` `|` `/` `\` |
+| `triangle` | Triangle filled solid | `<path>` or `<polygon>` with fill (equilateral, vertex up) | `|` |
+| `star` | Five-pointed star | Filled star (upright) | `|` |
 
-The symbol dictionary applies to the **contents** of shapes (and to line terminations, see 4.3). For the **outer frame** that may contain symbols, use the polygon containers in section 3. For **canonical, consistent SVG** for each symbol (size 1⁄8 of a standard answer in each direction), use the fragments and files in **nvr-symbol-svg-design.md** and the **`nvr-symbols/`** folder.
+**Lines (default)** are the reflection symmetry lines in default orientation (see Concepts, Symmetry and rotational symmetry). When forcing a symbol layout to be symmetric about a line (e.g. vertical), use only symbols that have that line of symmetry so the symbol does not conflict with the layout.
+
+The symbol dictionary applies to the **contents** of shapes (and to line terminations, see 3.4). For the **outer frame** that may contain symbols, use the shape containers in 3.1. For **canonical, consistent SVG** for each symbol (size 1⁄8 of a standard answer in each direction), use the fragments and files in **nvr-symbol-svg-design.md** and the **`nvr-symbols/`** folder.
 
 **fill** of **symbols** should always be solid black unless the question specifies a **fill** variation should be used.
 
-### 4.2 Polygon containers
-
-**Polygon containers** are the outer shapes that may contain symbols (or other content) in a diagram. Use these names when describing "a `square` with two `circle`s inside" or "each answer is a regular polygon".
-
-| Key | Description | Notes |
-|-----|-------------|-------|
-| `triangle` | Regular triangle (3 sides) | Equilateral |
-| `square` | Regular square (4 sides) | Same as rectangle with equal sides |
-| `rectangle` | Rectangle (4 sides, two pairs equal) | Not regular unless template says "square"; use when template allows non-square quadrilateral |
-| `pentagon` | Regular pentagon (5 sides) | |
-| `hexagon` | Regular hexagon (6 sides) | |
-| `heptagon` | Regular heptagon (7 sides) | |
-| `octagon` | Regular octagon (8 sides) | |
-| `circle` | Circle | Curved; use as outer frame when specified |
-
-**Regularity:** Unless the question template specifies otherwise, polygons are assumed **perfectly regular** (equal sides and equal angles). For example, "triangle" means equilateral, "pentagon" means regular pentagon. If the template explicitly allows a non-regular shape (e.g. "rectangle" for a long shape), use that; otherwise draw regular polygons only.
-
-### 4.3 Line types
+### 3.3 Line types
 
 Permitted stroke styles for **lines** (borders of shapes, connectors, axes, etc.). Reference by key in verbal descriptions.
 
@@ -136,7 +138,9 @@ Permitted stroke styles for **lines** (borders of shapes, connectors, axes, etc.
 
 Use a **single base stroke-width** (e.g. 2 in a 100-unit viewBox) for `solid`, `dashed`, `dotted`; use a consistent multiplier (e.g. 2) for `bold` so `bold` is the same across all diagrams.
 
-### 4.4 Line terminations
+**Symmetry:** Dashed and dotted line types **break reflection symmetry** (the dash/dot pattern does not mirror cleanly about a line). When forcing a symbol layout to be symmetric about a line, use only **solid** (or **bold**) for the shape border so the outline does not conflict with the layout.
+
+### 3.4 Line terminations
 
 How a **line ends** (e.g. arrow, chevron, or a symbol). Use when describing "a line with an arrowhead" or "a line ending in a circle".
 
@@ -150,45 +154,194 @@ How a **line ends** (e.g. arrow, chevron, or a symbol). Use when describing "a l
 | `circle` | Circle at line end | Same as symbol `circle` at terminus |
 | `cross` | Cross at line end | Same as symbol `cross` |
 
-Any symbol from the **symbol dictionary** (4.1) may be used as a line termination if it makes sense (e.g. "line ends in a `heart`"). List only the most common above; others (`heart`, `diamond`, `club`, `spade`, etc.) are referenced by the same key as in 4.1.
+Any symbol from the **symbol dictionary** (3.2) may be used as a line termination if it makes sense (e.g. "line ends in a `heart`"). List only the most common above; others (`heart`, `diamond`, `club`, `spade`, etc.) are referenced by the same key as in 3.2.
 
-### 4.5 Shading types
+### 3.5 Line augmentations
+
+**Line augmentations** are additional detail drawn **on** a single line (as opposed to line terminations, which are at the line ends). Use when describing "a line with a circle in the middle" or "a line with arrowheads along it". Augmentations might be arrowheads, slashes (`/`), vertical ticks (`|`), squares, or circles drawn on the line.
+
+**Default orientation:** Augmentations are **centred on the line** and **evenly spaced around the centre** unless the question template specifies otherwise (e.g. "clustered near one end", "one at centre only").
+
+| Key | Description | Notes |
+|-----|-------------|-------|
+| `arrowhead` | Arrowhead on the line | Single triangular arrowhead; orientation (e.g. pointing along line) may be specified or default |
+| `slash` | Slash (/) on the line | Short diagonal stroke crossing the line; angle may be specified or perpendicular to line |
+| `tick` | Vertical tick (\|) on the line | Short stroke perpendicular to the line |
+| `square` | Square on the line | Small square centred on the line; same as symbol `square` at an on-line position |
+| `circle` | Circle on the line | Small circle centred on the line; same as symbol `circle` at an on-line position |
+
+Other symbols from the **symbol dictionary** (3.2) may be used as line augmentations if they make sense (e.g. "a `heart` on the line"). Reference by the same key as in 3.2. Use a **consistent size** for augmentations (e.g. same as symbol cell or line-termination size) so the same key looks the same across diagrams.
+
+### 3.6 Shading types
 
 Permitted **fill / shading** for regions (e.g. inside a polygon, or a segment of a shape). Use when describing "the polygon is filled with grey" or "one half is `diagonal_slash`". Reference by key in verbal descriptions and when generating SVG.
 
-| Key | Description | Notes / SVG usage |
-|-----|-------------|-------------------|
-| `solid_black` | Solid black fill | `fill="#000"` or `currentColor` |
-| `grey` | Solid grey fill | `fill` with a mid grey (e.g. `#808080` or `#999`); use consistently across questions |
-| `white` | No fill / white (unshaded) | `fill="none"` or `fill="#fff"`; region appears empty or white |
-| `diagonal_slash` | Diagonal lines (/) | Hatched fill with lines running top-left to bottom-right; consistent spacing |
-| `diagonal_backslash` | Diagonal lines (\\) | Hatched fill with lines running top-right to bottom-left; consistent spacing |
-| `horizontal_lines` | Horizontal lines | Hatched fill with horizontal lines; consistent spacing |
-| `vertical_lines` | Vertical lines | Hatched fill with vertical lines; consistent spacing |
+| Key | Description | Notes / SVG usage | Lines (default) |
+|-----|-------------|-------------------|-----------------|
+| `solid_black` | Solid black fill | `fill="#000"` or `currentColor` | `-` `|` `/` `\` |
+| `grey` | Solid mid grey | `fill` with mid grey (e.g. `#808080`); use consistently across questions | `-` `|` `/` `\` |
+| `grey_light` | Solid light grey | `fill` with light grey (e.g. `#d0d0d0`); use consistently across questions | `-` `|` `/` `\` |
+| `white` | No fill / white (unshaded) | `fill="none"` or `fill="#fff"`; region appears empty or white | `-` `|` `/` `\` |
+| `diagonal_slash` | Diagonal lines (/) | Hatched fill with lines running top-left to bottom-right; consistent spacing | `\` (backslash only) |
+| `diagonal_backslash` | Diagonal lines (\\) | Hatched fill with lines running top-right to bottom-left; consistent spacing | `/` (slash only) |
+| `horizontal_lines` | Horizontal lines | Hatched fill with horizontal lines; consistent spacing | `|` (vertical only) |
+| `vertical_lines` | Vertical lines | Hatched fill with vertical lines; consistent spacing | `-` (horizontal only) |
+
+**Lines (default)** are the reflection symmetry lines of the shading pattern. Solid fills are symmetric about any line through the centre. Hatched fills: **horizontal lines** have **vertical** symmetry only (mirror left–right); **vertical lines** have **horizontal** symmetry only (mirror top–bottom); **diagonal slash** (/) has **backslash** (`\`) symmetry only; **diagonal backslash** (`\`) has **slash** (/) symmetry only. When forcing a symbol layout to be symmetric about a line (e.g. vertical), use only shading types that have that line of symmetry so the fill does not conflict with the layout.
 
 Use a **consistent line spacing and stroke width** for hatched shadings (`diagonal_slash`, `diagonal_backslash`, `horizontal_lines`, `vertical_lines`) so the same key looks the same in every diagram. Shading can apply to the whole shape, to a segment, or to the **fill** of symbols (e.g. "symbol `circle` with `grey` fill").
 
-### 4.6 Symbol layout inside shapes
+**Symbols and hatched areas:** Symbols **must not** appear on hatched (line) shaded areas. Use **solid** or **white** fill for any region that contains a symbol layout. Hatched shading is for shapes or sections that do **not** contain symbols (e.g. partitioned sections, or shape-only diagrams).
 
-When placing **multiple symbols inside a polygon container** (e.g. "a `square` with 10 `club`s inside"), choose a **layout** so that symbols do not overlap (see nvr-symbol-svg-design.md: centre-to-centre at least 12.5 in a 100×100 answer). Unless the question template states otherwise, use **randomly spaced** layout.
+### 3.7 Symbol layout inside shapes
+
+When placing **multiple symbols inside a shape container** (e.g. "a `square` with 10 `club`s inside"), choose a **layout** so that symbols do not overlap (see nvr-symbol-svg-design.md: centre-to-centre at least 12.5 in a 100×100 answer). Unless the question template states otherwise, use **randomly spaced** layout. The shape **fill** (or the section fill, if partitioned) in regions where symbols are placed must be **solid** or **white**—not hatched (see §3.6: symbols cannot appear on hatched areas).
+
+**In templates:** A template may refer to "a shape containing a **symbol layout**" to mean a shape container with one or more symbols inside, arranged according to this subsection (e.g. randomly spaced or randomly clustered).
 
 | Layout | Description | When to use |
 |--------|-------------|-------------|
 | **Randomly spaced** (default) | Symbols are placed at positions that **avoid overlap** but with **deliberately irregular spacing**: avoid a regular grid; vary horizontal and vertical gaps so the arrangement looks scattered, not aligned. | **Default** when the template does not specify a layout. |
 | **Randomly clustered** | Symbols are concentrated in **one region** of the shape: **top**, **bottom**, **left**, or **right**. Specify which (e.g. "symbols clustered in the top half"). Positions within that region are irregular; symbols still must not overlap. | When the template asks for clustering (e.g. "clustered in the bottom", "grouped on the left"). |
 
+### 3.8 Shape stacks
+
+A **shape stack** is an arrangement where shapes are drawn in a notional **depth order**: a shape at the **bottom** of the stack is drawn first, and a shape **above** it in the stack is drawn over it. Use when describing "a square with a circle on top" or "four regular shapes in a stack".
+
+**Rules:**
+
+- A shape at the **bottom** of the stack has no other shape drawn underneath it; it may be partially covered by shapes above.
+- A shape **above** another in the stack is drawn so that it **partially but not fully** conceals the shape(s) below—enough of the lower shape(s) remains visible so that stack order and identity are clear.
+- A shape with no shapes drawn **above** it is at the **top** of the stack.
+- Two shapes are **equal depth** if neither overlaps the other (e.g. side by side or separated); neither is "above" the other.
+
+**Referring to stacks in templates:** A question template can refer to shapes by **depth** (e.g. "the shape at the bottom", "the top shape") or by **count and role** (e.g. "4 regular shapes in a stack", "2 regular equal-depth shapes and 1 shape on top"). When a template requests "N shapes in a stack", assign each shape a depth (e.g. bottom = 1, next = 2, … top = N) and draw them in that order so that each higher depth partially conceals the one(s) below. When a template requests "M equal-depth shapes and 1 shape on top", draw the M shapes so they do not overlap each other, then draw the single "on top" shape so it partially overlaps each shape within the equal-depth group and does not fully conceal any single shape below.
+
+### 3.9 Partitioned shapes
+
+A shape may be **partitioned** to divide it into **sections**, each of which may have its own **shading** (see §3.6). Partitioning is supported in five modes: **horizontal**, **vertical**, **diagonal** (slash or backslash), **concentric**, and **segmented**. Use partitioned shapes when the template describes "a shape divided into halves", "stripes", "bands", "rings", or "pie-style segments" (e.g. a grey annulus inside a circle, or a circle in quarters).
+
+**Section bounds:** Each section is defined by **upper and lower bounds** along the partition dimension, given as a proportion of the shape extent from **0** (one extreme) to **100** (the other). For example, a **horizontal** partition with sections **(0, 50)** and **(50, 100)** cuts the shape into two halves (top and bottom). Bounds are **inclusive** at the lower end and **exclusive** at the upper end for contiguous sections unless the template specifies otherwise. Unless specified, partitions should be **evenly distributed** (e.g. two sections → (0, 50) and (50, 100); three sections → (0, 33⅓), (33⅓, 66⅔), (66⅔, 100)).
+
+**Bands:** A **band** is a thin section within a partition—e.g. the second section of a partition with bounds **(0, 30)**, **(30, 40)**, **(40, 100)** is a band between 30% and 40%. Bands may be **adjacent** (e.g. **(50, 60)** and **(60, 70)**) to form multiple thin stripes or rings.
+
+**Horizontal partition:** Cuts the shape with horizontal lines. Sections sit one above the other (e.g. top section 0–50%, bottom 50–100%). **Horizontal partitioning breaks horizontal symmetry** (a line through the centre left–right) but **does not break vertical symmetry** (top–bottom mirror).
+
+**Vertical partition:** Cuts the shape with vertical lines. Sections sit side by side (e.g. left 0–50%, right 50–100%). **Vertical partitioning breaks vertical symmetry** but **does not break horizontal symmetry**.
+
+**Diagonal partition:** Cuts the shape with diagonal lines (slash `/` or backslash `\`). Sections are defined along the diagonal axis in the same way as horizontal/vertical; bounds 0–100 run from one corner of the shape to the opposite corner. Diagonal partitioning breaks the corresponding diagonal symmetry but not the other diagonal.
+
+**Concentric partition:** Divides the shape by drawing a **scaled copy of the shape inside itself**. The scale is given as a proportion: **0** = centre (or degenerate inner shape), **100** = outer edge of the shape. For example, a **(0, 50)**, **(50, 100)** concentric partition on a **circle** draws an inner circle at 50% of the radius and divides the circle into a central disc and an outer ring. A **(40, 50)** concentric **band** with grey shading inside a white circle draws a **thin grey annulus** (ring) between 40% and 50% of the radius. Bands can be adjacent (e.g. **(50, 60)** and **(60, 70)**) to form multiple concentric rings. Concentric partitioning preserves rotational symmetry of the shape but may break reflection symmetry if shading differs between rings.
+
+**Segmented partition:** Divides the shape **radially from the centre** into **segments** (pie-style wedges). Section bounds 0–100 run from one radial boundary to the next; each section is one segment.
+
+- **Regular shapes (circle and regular polygons):** Segmented partitioning divides the shape into radial wedges. For a **circle**, any number of segments is allowed (each wedge is identically shaped). For a **regular polygon**, use segmented partitioning when the **number of segments divides the number of vertices** (or sides), so that each segment is **identically shaped**—e.g. a **regular hexagon** with 6 segments gives 6 equal wedges; a **square** with 4 segments gives 4 quadrants. Other counts (e.g. 5 segments in a hexagon) are permitted only if the template explicitly allows non-identical segments. **Segment numbering:** By default, segments are **numbered clockwise from north** (12 o'clock): segment 0 is the wedge that has the top (north) direction in its span, and numbering proceeds clockwise. For a circle or polygon with a vertex at the top, the first segment is typically the top-centre wedge.
+- **Irregular shapes:** An **irregular** shape may be partitioned into **exactly 4 segments** by dividing **horizontally and vertically** through the centre (a central horizontal and vertical line), producing four **irregular** pieces (quadrants). This is the only standard segmented partition for irregular shapes; other segment counts are not defined unless the template specifies otherwise.
+- **Semicircle:** A **semicircle** may have a segmented partition. The segments are defined **from the centre of the original (full) circle** that the semicircle is cut from: radial lines from that centre divide the semicircle into wedges. **Segment numbering** is **clockwise from the "start" of the semicircle**—e.g. for the default semicircle (flat at the bottom, arc on top), the start is one end of the flat edge, and segments are numbered clockwise along the arc. The number of segments is specified by the template (e.g. 2 or 3 wedges).
+
+**Symbol layouts and partitions:** Symbol layouts (see §3.7) **may be absent** in a partitioned shape (the diagram shows only the divided shape and its shading). If present, symbols **may be confined to a single partition** (e.g. "three circles in the top half only"); otherwise the generator may place symbols across the shape subject to the partition boundaries. When symbols are confined to one partition, placement rules (margin, minimum centre-to-centre) apply **within that section** only.
+
+**Partition outlines:** The lines that separate sections (or the inner boundary of a concentric band) are drawn as **thin lines by default**, using the same line type as the shape border unless the template specifies otherwise.
+
 ---
 
-## 5. Writing verbal question templates
+## Concepts
 
-When writing a **verbal question template** (e.g. for AI or a generator), the generator should **choose vocabulary elements at random** (one or more symbols, line types, line terminations, and/or shading types from sections 3–4) and **stick with those same choices** for part or all of that question. **Increase randomness:** use a random draw (or shuffle) when the template calls for a free choice—e.g. "each answer is a regular polygon (3–8 sides)" → draw randomly from the allowed set for each option, so that question-to-question and option-to-option outcomes are unpredictable. For example: "For this question, use symbol `circle`, line type `dashed`, and line termination `arrow_single` for every option." That keeps the question self-consistent and avoids mixing unrelated styles within a single item. The template may specify which vocabulary elements are fixed for the whole question and which (if any) vary per option.
+This section defines **diagram sequences**, **arrays** of shapes, and **symmetry and rotational symmetry**, which are used when describing or comparing diagrams and when writing question templates.
+
+### Diagram sequences
+
+A **diagram sequence** is a recognisable pattern of at least two elements within a diagram that may be used to distinguish that diagram from others. This is **distinct** from **sequence questions** (to be fully defined later), which will relate to a pattern that changes state in a predictable way between **multiple diagrams** in a question that are presented to the user in a specific order. Within the context of describing a **particular diagram**, **sequence** should be interpreted as a **diagram sequence**.
+
+**Examples of diagram sequences:** In a **stack** of shapes we may observe a shading pattern of grey, black, white starting from the bottom of the stack. Or, in a shape, we may observe a clockwise **augmentation** pattern of one, two, three arrowheads on sides of the shape.
+
+**Visible domain size:** In a diagram, the **visible domain size** of a sequence is the size of the visible information space it occupies—e.g. a circle **partitioned** into 4 **sections** would have a domain size of 4. In general, for questions to be unambiguous, the sequence length should be less than or equal to the domain size; however, this will not always be the case.
+
+**Repeating sequence:** A **repeating sequence** is one which repeats within its domain. For example, a (black, white) repeating sequence within a hexagon partitioned into 6 **segments** would appear as (black, white, black, white, black, white) clockwise from north.
+
+**Terminating sequence:** A **terminating sequence** (or **non-repeating sequence**) is one which does not repeat. If the domain size is larger than the sequence length, some positions in the domain are not assigned values from the sequence and are instead assigned **null**. A parameter value for the **null** must be chosen and **assigned** to those positions. For example, in a hexagon partitioned into 6 **segments** with a terminating (black, white) sequence, we might choose light grey as the null; then the segments could appear as (light grey, light grey, black, white, light grey, light grey) or (light grey, light grey, light grey, black, white, light grey) clockwise from north. We describe this as "(black, white) with null light grey". For numeric sequences (e.g. number of arrowheads augmenting a side, or number of symbols in a shape), null should be represented as zero.
+
+**Looping domain:** A **looping domain** is the natural default case, particularly when considering sequence patterns on segments, sides, or **vertices** of polygons. The "first" position in the domain is considered to continue the sequence after the last position. For example, a **stack** of shapes showing a **sequence** of circle, triangle, square and a **stack** of shapes showing a sequence of square, circle, triangle both **exhibit** the same sequence (circle, triangle, square) if we consider the domain to loop.
+
+**Extended domain:** An **extended domain** is a possible case allowing an invisible element in the domain; it should be used with care as it may lead to ambiguous questions. For example, we could have a sequence white, light grey, grey, black with extended domain size 4. A stack of 3 circles showing white, light grey, grey, and a stack of 3 circles showing light grey, grey, black could both be considered to exhibit the sequence. **Extended domains should never be used on segmented partition regular shapes** as this is highly counter-intuitive, and extended domains should only be used if the template specifically requests it.
+
+**Direction of a sequence:** The **direction** of a sequence is the direction it follows within the domain. Some language interpretation of direction is needed:
+
+| Domain type | Direction language (examples) |
+|-------------|-------------------------------|
+| **Stack** | Up, down; shapes **above** or **below** each other |
+| Partitioned shape, **segments** | Clockwise or anticlockwise |
+| Partitioned shape, **concentric** sections | **In** (toward the centre) or **out** (toward the boundary) |
+| **Horizontal** and **diagonal** partitions | **Ascending** = top to bottom on the diagram |
+| **Vertical** partition | **Ascending** or **right** = left to right |
+
+Within a question, the direction of a sequence must be the same in order for two sequences to be equivalent. For example, a square with horizontal partitions (white, grey, black) top to bottom does **not** exhibit the same sequence as (black, white, grey) top to bottom.
+
+**Symmetric sequence:** A **symmetric** sequence is one that reads the same start-to-end as end-to-start—e.g. (white, black, white), or (club, diamond, diamond, club). Any sequence of length 2 is automatically symmetric. Odd-one-out questions using sequences will frequently have all answers except one exhibiting a sequence and the correct answer exhibiting its **mirror image** (the sequence read in the opposite direction). For example, in a question where each answer is a shape with multiple concentric partitions, the sequence (grey, diagonal_slash) in one direction could be the common pattern, and the odd one out could exhibit (diagonal_slash, grey) in that same direction—the mirror image of the sequence.
+
+### Arrays of shapes
+
+An **array** of shapes is a layout of multiple **shape containers** within a single diagram. The shapes are arranged in a regular grid with **even spacing** between them and **horizontal alignment** (rows and columns align). The layout may be **two-dimensional** (e.g. rows × columns) or **one-dimensional** (e.g. a single row or column, such as 1×4 or 4×1).
+
+**Scaling:** Shapes in an array must be **scaled uniformly** (same scale factor horizontally and vertically) so that the whole array, including spacing, fits inside the diagram’s **bounding box** (e.g. the viewBox of the answer image). Each shape container is drawn at the same scale as the others in the array.
+
+**Notation and examples:** A template may specify an array by giving the grid dimensions (rows × columns) and the shape type (or a set of types, e.g. “regular shapes”). Examples:
+
+- A **2×2 array of triangles**: four triangles in two rows and two columns.
+- A **3×2 array of regular shapes**: six shapes (each chosen from the regular shape vocabulary—circle or 3–8 sided polygon) in three rows and two columns.
+- A **1×4 array of pentagons**: four pentagons in a single row.
+
+Arrays are distinct from **shape stacks** (see §3.8): in a stack, shapes overlap in depth order; in an array, shapes do not overlap and are laid out in a grid with consistent spacing.
+
+### Symmetry and rotational symmetry
+
+When building shapes and pictures, the generator should maintain a **rudimentary awareness** of whether the picture has **reflection symmetry** (about a line) and **rotational symmetry** (of a given order). This subsection defines how we record symmetry for shape containers only; we do not track finer detail.
+
+**Lines of symmetry:** We record at most four **line-of-symmetry types** in default orientation: **horizontal** (`-`), **vertical** (`|`), **diagonal /** (`/`), and **diagonal \\** (`\`). A shape is **symmetric** if it has at least one line of symmetry (of any of these types). Rotational symmetry **order** is the number of distinct rotations (multiples of 360°/n) that leave the shape unchanged (e.g. order 4 for a square).
+
+**Symmetry as differentiator:** When a template specifies **symmetry** as a differentiator (e.g. "the odd one out differs by symmetry"), it means **horizontal or vertical** line symmetry only, unless the template explicitly says **any symmetry** (all four line types) or **diagonal symmetry** (diagonal `/` and `\` only). The split of "has symmetry" vs "no symmetry" across options may be **4–1** (four symmetric, one asymmetric) or **1–4** (one symmetric, four asymmetric); treat these two outcomes with **equal frequency** unless the template explicitly modifies it. Among the **available lines of symmetry** for that template (e.g. vertical and horizontal when "symmetry" is unspecified, or all four when "any symmetry", or both diagonals when "diagonal symmetry"), select which line to use with **equal outcome frequency** for each available line unless the template explicitly modifies the frequency (e.g. with **common** / **uncommon** / **rare**).
+
+**Symmetry as a variator (line option):** When **symmetry** is added as a variator (and may be chosen as the differentiator), the generator may offer a choice of **horizontal**, **vertical**, or **any** as the line of symmetry for that question. If **horizontal** is chosen, options where symmetry is forced use a horizontal line only; if **vertical**, a vertical line only. If **any** is chosen, the question uses a **mix** of lines across options: some answers have a horizontal line of symmetry, some have a vertical line, and one has none (the odd one out). Diagonal lines are **not** used when forcing layout symmetry for now.
+
+**When forcing layout symmetry:** When the generator forces a symbol layout to be symmetric about a line (e.g. vertical `|` or horizontal `-`), it must use only **shape containers** (see table below), **symbols** (see §3.2), **shading types** (see §3.6), and **line types** (see §3.3) that do not break symmetry. Use shapes/symbols/fills that have that line of symmetry in default orientation; use **solid** (or **bold**) for the shape border only—**dashed** and **dotted** break reflection symmetry and must be avoided.
+
+**Default orientation:** All of the following refer to the shape in its **default orientation** (as defined in section 3.1). Rotating a shape changes which of the four line types apply; the generator must update symmetry when orientation is changed.
+
+**Shape containers (default orientation):**
+
+| Shape | Symmetric? | Lines (default) | Rotational order |
+|-------|------------|-----------------|------------------|
+| `circle` | Yes | `-` `|` `/` `\` | ∞ |
+| `square` | Yes | `-` `|` `/` `\` | 4 |
+| `triangle` (regular) | Yes | `|` | 3 |
+| `pentagon` | Yes | `|` | 5 |
+| `hexagon` | Yes | `|` `-` | 6 |
+| `heptagon` | Yes | `|` | 7 |
+| `octagon` | Yes | `|` `-` | 8 |
+| `right_angled_triangle` | Yes | `/` | 1 |
+| `rectangle` | Yes | `|` `-` | 2 |
+| `semicircle` | Yes | `|` | 1 |
+| `cross` | Yes | `|` `-` | 4 |
+| `arrow` | Yes | `-` | 1 |
+
+**Symbol layouts:** A **symbol layout** (symbols placed inside a shape, see section 3.7) has **no symmetry** by default and **destroys** the symmetry of the shape when added—the combined picture (container + symbols) is not symmetric unless the layout is explicitly constructed to be symmetric. The generator **must** support a way to **force symmetry** when generating symbol layouts (e.g. mirror positions about a chosen line, or rotational placement) so that a template can request "a symmetric layout" or "layout with vertical symmetry".
+
+**Spacing when using symmetry:** When placing symbols so the layout is symmetric about a line, the generator may put a **single symbol exactly on the line of symmetry** (no mirror; the symbol sits on the line). For any **pair** of positions (one in the canonical half and its mirror), a position **off the line** must be at least **half the usual minimum centre-to-centre distance** from the line of symmetry; otherwise the mirror would lie within the usual minimum distance and symbols would overlap. So: on the line = allowed (one symbol); off the line = distance from line ≥ (min distance)⁄2 so that the mirror is at least the full min distance away.
+
+**Rotation:** If a shape is **rotated** from its default orientation, its **recorded lines of symmetry change** to match the new orientation (e.g. a square rotated 45° has `/` and `\` as the horizontal/vertical-looking lines in the image). The generator should update or recompute symmetry when applying rotation.
+
+---
+
+## 4. Writing verbal question templates
+
+When writing a **verbal question template** (e.g. for AI or a generator), the generator should **choose vocabulary elements at random** (one or more symbols, line types, line terminations, line augmentations, and/or shading types from section 3) and **stick with those same choices** for part or all of that question. **Increase randomness:** use a random draw (or shuffle) when the template calls for a free choice—e.g. "each answer is a regular polygon (3–8 sides)" → draw randomly from the allowed set for each option, so that question-to-question and option-to-option outcomes are unpredictable. For example: "For this question, use symbol `circle`, line type `dashed`, and line termination `arrow_single` for every option." That keeps the question self-consistent and avoids mixing unrelated styles within a single item. The template may specify which vocabulary elements are fixed for the whole question and which (if any) vary per option.
 
 ### Step 1: Verbal description
 
 Start with a **verbal description** of the question that:
 
 - States the question type (e.g. odd-one-out, sequence, matrix, code).
-- Describes each figure or option using only terms from the **NVR visual vocabulary** (sections 3–4): vocabulary elements (symbols, line types, line terminations, shading types) and standard polygon names (`square`, `triangle`, etc.). All such terms are quoted in this guide, e.g. `circle`, `dashed`, `arrow_single`.
+- Describes each figure or option using only terms from the **NVR visual vocabulary** (section 3): vocabulary elements (symbols, line types, line terminations, line augmentations, shading types) and standard shape names (`square`, `triangle`, etc.). All such terms are quoted in this guide, e.g. `circle`, `dashed`, `arrow_single`.
 - Identifies the correct answer and the rule (e.g. "odd one out is B because it has two circles").
 
 ### Terminology (parameters, global parameters, variators, differentiator)
@@ -218,40 +371,71 @@ When generating NVR questions from templates that use parameters (e.g. random **
 
 - **Random assignment (no fixed order):** Variators (shapes, line styles, fills, symbols) must be **assigned randomly** to options 1–5 (e.g. by random draw or shuffle). Do **not** use a fixed order (e.g. option 1 = triangle, option 2 = square, option 3 = pentagon). Use a random process so that which option gets which value is unpredictable. When there are fewer variator values than options, **spread** repeats so no single value dominates and no option is the "only one" with a given value where that would confuse the intended rule (e.g. for odd-one-out by symbol count, avoid one option being the only square).
 
-- **Symbols inside the containing shape:** Symbol centres must lie **inside** the polygon container, with a margin so that the full symbol cell does not cross the polygon edge. For non-rectangular shapes (e.g. triangle, pentagon), use a point-in-polygon check and require the minimum distance from the symbol centre to the polygon boundary to be at least the symbol cell half-size so that symbols remain fully inside the shape.
+- **Symbols inside the containing shape:** Symbol centres must lie **inside** the shape container, with a margin so that the full symbol cell does not cross the shape edge. For non-rectangular shapes (e.g. triangle, pentagon), use a point-in-polygon check and require the minimum distance from the symbol centre to the shape boundary to be at least the symbol cell half-size so that symbols remain fully inside the shape.
 
-- **No black fill when shape contains symbols:** Do **not** use solid black fill (`solid_black`) for any polygon or container that contains symbols. Symbols are drawn in black (or currentColor); on a black background they would not be visible. When the shape has symbol content, use `white`, `grey`, or a hatched shading instead.
+- **No black fill when shape contains symbols:** Do **not** use solid black fill (`solid_black`) for any shape container that contains symbols. Symbols are drawn in black (or currentColor); on a black background they would not be visible. When the shape has symbol content, use `white`, `grey`, `grey_light`
 
 **Example (avoiding accidental correct answers):** Suppose each of the 5 options is "a quantity of a randomly chosen `symbol` inside a randomly chosen `shape`". The intended rule is "each shape contains 3 symbols, except the odd one out (e.g. option 2) which contains 4." The **differentiator** is symbol count. If the generator chose shapes as: 1. circle, 2. circle, 3. circle, 4. square, 5. circle, then option 4 (square) would be the only square and could be misinterpreted as another valid "odd one out". To avoid that, assign **variators** (here, shape) so that no single option is unique on a variator that is not the differentiator—e.g. use at least three distinct shapes (e.g. triangle, circle, circle, square, circle) or ensure each shape value appears at least twice (e.g. circle, circle, square, square, circle).
+
+### Frequency modifiers
+
+Question templates may use the words **common**, **uncommon**, and **rare** to affect the **probability** of particular outcomes—for example when selecting a variator value from a set, or when selecting which variator is the **differentiator**. The generator should use **weighted random choice** according to the rules below.
+
+**Weights (default context):** When a frequency modifier applies to a per-answer or per-choice context (e.g. which value to assign for a variator, or which variator to use as differentiator when the template does not specify), the default frequency for any outcome is **common**, meaning **weight 1**. All outcomes are then chosen with probability proportional to their weight.
+
+- **common** (default): weight **1**. If no modifier is specified, treat the outcome as common.
+- **uncommon**: weight **1⁄3**. The outcome is one-third as likely as a common outcome.
+- **rare**: weight **1⁄10**. The outcome is one-tenth as likely as a common outcome.
+
+**Example (default context):** If there are 5 outcomes and one is marked **uncommon** (weight 1⁄3) and the other four are common (weight 1 each), total weight = 4×1 + 1⁄3 = 13⁄3. The uncommon outcome is selected with probability (1⁄3)⁄(13⁄3) = **1⁄13**.
+
+**Where modifiers apply:** Templates may attach frequency modifiers to (a) the choice of **differentiator** (when the template allows the generator to choose), (b) the choice of **variators** (which parameters vary), or (c) the choice of **values** for a variator (e.g. "shape: square common, circle uncommon, triangle rare"). In all of these contexts, unmodified outcomes use **weight 1** (common); only outcomes explicitly marked uncommon or rare use 1⁄3 or 1⁄10 respectively.
+
+**“Add [item] as a variator and a [frequency] differentiator”:** A template may say e.g. “**uncommon** add **symmetry** as a variator and an **uncommon** differentiator”. Interpret this as two separate weighted choices. (1) **Whether to add the item to the variator set:** Weights are **add** = weight for the stated frequency (e.g. uncommon → 1⁄3) and **do not add** = weight 1. So P(add) = (1⁄3)⁄(1 + 1⁄3) = **1⁄4**. The variator set is then formed from the usual list (e.g. shape, line style, fill, symbol, number of symbols), plus this item if “add” was chosen. (2) **Choice of differentiator** (from whichever variators were selected): The item, if present, has the stated frequency (e.g. uncommon → weight 1⁄3); other variators have weight 1 unless the template gives them a different frequency. So “uncommon add symmetry as a variator and an uncommon differentiator” means: 1⁄4 chance symmetry is in the variator set; when choosing the differentiator among the selected variators, symmetry (if present) has weight 1⁄3 and each other variator has weight 1. For the definition of symmetry and how to apply it when generating diagrams, see **Concepts → Symmetry and rotational symmetry**.
 
 ### Step 2: Generate pictorial assets (SVG)
 
 From the verbal description:
 
 - **AI or author** produces one SVG per question image and per option image.
-- Use **only** the vocabulary elements from section 3 (symbols, line types, line terminations, shading types). Use a consistent viewBox (e.g. `0 0 100 100`) and base stroke-width across options so diagrams are comparable.
-- **Containers centred:** Unless the question template explicitly states otherwise (e.g. "offset to the left", "positioned at top"), **polygon containers (and other outer frames) must be centred vertically and horizontally** in the answer image. The centre of the container should coincide with the centre of the viewBox (e.g. (50, 50) for viewBox 0 0 100 100).
-- Save as `.svg` files (e.g. `option-a.svg` … `option-d.svg`) and host them; store the URLs in `question_image_url` / `option_image_url` as in section 5–6.
+- Use **only** the vocabulary elements from section 3 (shape containers, symbols, line types, line terminations, line augmentations, shading types). Use a consistent viewBox (e.g. `0 0 100 100`) and base stroke-width across options so diagrams are comparable.
+- **Containers centred:** Unless the question template explicitly states otherwise (e.g. "offset to the left", "positioned at top"), **shape containers (and other outer frames) must be centred vertically and horizontally** in the answer image. The centre of the container should coincide with the centre of the viewBox (e.g. (50, 50) for viewBox 0 0 100 100).
+- Save as `.svg` files (e.g. `option-a.svg` … `option-d.svg`) and host them; store the URLs in `question_image_url` / `option_image_url` as in section 4–5.
 
 Verbal descriptions can be stored alongside the question (e.g. in a content pipeline or as comments) so that future edits or regeneration still reference the same vocabulary.
 
 ### Placeholder for example questions
 
-Once this guide is approved, **10 example verbal NVR questions** will be added (or kept in a separate file) that reference the above dictionaries. Each will be in the form of a short verbal description suitable for feeding into diagram generation. All section 5 defaults (5 options, random per-answer choice **with duplication allowed**, containers centred, etc.) apply unless the template states otherwise; templates need not mention duplication.
+Once this guide is approved, **10 example verbal NVR questions** will be added (or kept in a separate file) that reference the above dictionaries. Each will be in the form of a short verbal description suitable for feeding into diagram generation. All section 4 defaults (5 options, random per-answer choice **with duplication allowed**, containers centred, etc.) apply unless the template states otherwise; templates need not mention duplication.
 
+----
 **Example Question Template 1**
 
 **Odd one out**
 
-- **Setup:** 3 to 5 variators from **regular shape**, **line style**, **fill**, **symbol** or **number of symbols** 
+**Setup**
+- Each answer is a **common shape** containing a **symbol layout**
+- 3 to 5 variators from **shape**, **line style**, **fill**, **symbol** or **number of symbols** 
+- **shape** and **fill** are **uncommon** differentiators
+- **uncommon** add **symmetry** as a variator and an **uncommon** differentiator
 
----
+**Example Question Template 2**
 
-## 6. Adding questions to the database
+**Odd one out**
+
+**Setup**
+- Each answer is a **common shape** **partitioned** into **sections** using different **shading**
+- 3 to 4 variators from **shape**, **partition direction**, **number of sections**, **shading sequence of sections** 
+- **shape** is not a differentiator
+
+
+----
+
+## 5. Adding questions to the database
 
 ### Prerequisites
 
-- Images are already **uploaded** and you have a **stable public URL** for each (see section 7).
+- Images are already **uploaded** and you have a **stable public URL** for each (see section 6).
 - You know the correct `subject_id` and `topic_id` (from `subjects` and `topics`).
 
 ### Insert a question with a question image
@@ -292,7 +476,7 @@ VALUES
 
 ---
 
-## 7. Uploading and hosting images
+## 6. Uploading and hosting images
 
 - **Storage:** Upload SVG (or PNG/JPEG) files to your chosen storage (e.g. Supabase Storage, S3, CDN). Obtain a **stable public URL** for each file.
 - **URLs:** Store only the URL in `question_image_url` or `option_image_url`; the database does not store binary image data.
@@ -300,8 +484,8 @@ VALUES
 
 ---
 
-## 8. Display on the website
+## 7. Display on the website
 
 For **diagrams and NVR-style graphics** (shapes, sequences, odd-one-out, line drawings):
 
-- **SVG is required.** All such assets must be produced in SVG and must use only the **NVR visual vocabulary** (section 3: symbol dictionary, line types, line terminations, shading types). Browsers render SVG from a URL the same way (`<img src="option-a.svg">`). See the sample assets in `sample-nvr-odd-one-out/` for examples.
+- **SVG is required.** All such assets must be produced in SVG and must use only the **NVR visual vocabulary** (section 3: shape containers, symbol dictionary, line types, line terminations, line augmentations, shading types). Browsers render SVG from a URL the same way (`<img src="option-a.svg">`). See the sample assets in `sample-nvr-odd-one-out/` for examples.

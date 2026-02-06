@@ -11,9 +11,10 @@ from typing import Optional
 
 # Allowed splits: tuple of counts (e.g. (2, 3) = two values, one appears 2× one 3×).
 # Never 4–1 for 5 options; never 3–1 for 4 options; never 5–1 for 6 options.
+# (5) for 5 options = all same value, so no accidental odd-one-out (needed when e.g. fill has only 2 values).
 ALLOWED_SPLITS: dict[int, list[tuple[int, ...]]] = {
     4: [(2, 2), (2, 1, 1)],
-    5: [(2, 3), (3, 1, 1), (2, 2, 1), (2, 1, 1, 1), (1, 1, 1, 1, 1)],
+    5: [(5,), (2, 3), (3, 1, 1), (2, 2, 1), (2, 1, 1, 1), (1, 1, 1, 1, 1)],
     6: [
         (3, 3), (2, 2, 2), (4, 2), (4, 1, 1), (3, 2, 1),
         (3, 1, 1, 1), (2, 2, 1, 1), (2, 1, 1, 1, 1), (1, 1, 1, 1, 1, 1),

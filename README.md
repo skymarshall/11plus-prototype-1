@@ -61,7 +61,7 @@ Run insert scripts **after** `create_11plus_supabase.sql`.
 
 - **`nvr-symbols/`** – SVG symbol set (circle, club, spade, heart, diamond, cross, square, triangle, star) used by the NVR option generator.
 - **`sample-nvr-odd-one-out/`** – Python scripts to generate NVR odd-one-out answer-option SVGs from the picture-based-questions guide:
-  - **`generate_nvr_option_svg.py`** – One option: shape (polygon/circle), line style, fill, symbol type, symbol count; uses `../nvr-symbols/`.
+  - **`generate_shape_container_svg.py`** – Shape container (optionally with symbols inside). Supports all common shapes (regular + irregular); use `--empty` for container only. Uses `../nvr-symbols/`.
   - **`generate_template1_options.py`** – Five options for Example Template 1 (differentiator + 3–5 variators; see guide §5).
   - **`param_splits.py`** – Allowed parameter splits for odd-one-out (e.g. 2–3, 3–1–1 for 5 options).
   - **`generate_all_symbols_in_square.py`** – One square per symbol type (for asset check).
@@ -104,7 +104,7 @@ From the repo root:
 cd sample-nvr-odd-one-out
 python generate_template1_options.py
 python generate_template1_options.py --seed 42
-python generate_nvr_option_svg.py club -n 10 -o option-club.svg
+python generate_shape_container_svg.py club -n 10 -o option-club.svg
 ```
 
 ---

@@ -1,0 +1,10 @@
+# Python cache (this folder)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Generated output (all scripts write here)
+output/
+
+# Generated option SVGs (produced by generate_template1_options.py / generate_shape_container_svg.py)
+*.svg

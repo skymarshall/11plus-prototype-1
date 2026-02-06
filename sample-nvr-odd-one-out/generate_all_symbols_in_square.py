@@ -3,14 +3,14 @@
 Generate option-square-10-{symbol}.svg for each symbol type (guide §4.1).
 
 Each output is a square containing 10 instances of that symbol, randomly placed
-with no overlap. Uses generate_nvr_option_svg.py. See picture-based-questions-guide.md
-§4.6 (symbol layout) and nvr-symbol-svg-design.md.
+with no overlap. Uses generate_shape_container_svg.py. See picture-based-questions-guide.md
+§3.7 (symbol layout) and nvr-symbol-svg-design.md.
 
 Usage:
   python generate_all_symbols_in_square.py
   python generate_all_symbols_in_square.py --seed 0
 
-Requires generate_nvr_option_svg.py in this directory and nvr-symbols in parent.
+Requires generate_shape_container_svg.py in this directory and nvr-symbols in parent.
 """
 
 import argparse
@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-GENERATOR = SCRIPT_DIR / "generate_nvr_option_svg.py"
+GENERATOR = SCRIPT_DIR / "generate_shape_container_svg.py"
 SYMBOL_COUNT = 10
 
 # Symbol dictionary (guide §4.1); must match files in nvr-symbols/
