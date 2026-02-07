@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate 2×2 and 3×2 arrays of partitioned shapes with varied shape, partition type,
-and shading per cell (picture-based-questions-guide.md §3.9). Solid outlines only.
+and shading per cell (question-gen/QUESTION-GENERATION-DESIGN.md §4, Partitioned shapes). Solid outlines only.
 
 Each cell is generated as a separate SVG (viewBox 0 0 100 100), then inlined into
 array-2x2-partitioned.svg and array-3x2-partitioned.svg so one file shows all shapes

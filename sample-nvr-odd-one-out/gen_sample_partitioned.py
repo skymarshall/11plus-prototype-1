@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate sample partitioned-shape SVGs (picture-based-questions-guide.md §3.9).
+Generate sample partitioned-shape SVGs (question-gen/QUESTION-GENERATION-DESIGN.md §4, Partitioned shapes).
 
 Calls nvr_draw_container_svg.py with --partition to produce:
   - Horizontal partition: square, hexagon, octagon (two or three sections)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate sample array SVGs (picture-based-questions-guide.md, Arrays).
+Generate sample array SVGs (question-gen/QUESTION-GENERATION-DESIGN.md §4, Concepts → Arrays of shapes).
 
 Calls nvr_draw_array_svg.py for presets including:
   - Homogeneous arrays (triangles, squares, etc.)

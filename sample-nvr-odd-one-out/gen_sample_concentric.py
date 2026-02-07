@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate one simple concentric-partition SVG per supported shape (picture-based-questions-guide.md §3.9).
+Generate one simple concentric-partition SVG per supported shape (question-gen/QUESTION-GENERATION-DESIGN.md §4, Partitioned shapes).
 
 Concentric partition: three rings (centre, middle, outer). Supported for circle, polygons, semicircle, and symbol shapes (plus, times, club, heart, diamond, spade, star). Symbols use scaled path from nvr-symbols (not sampled polygon). Uses lib/nvr_draw_container_svg.py --partition concentric with --partition-sections 0,33.33,66.67,100. Requires --motifs-dir for symbol shapes.
 

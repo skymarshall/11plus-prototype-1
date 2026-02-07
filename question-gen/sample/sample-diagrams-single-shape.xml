@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample diagrams for testing XML→SVG: single shape only (optionally partitioned). -->
+<diagrams>
+  <diagram id="square-white">
+    <shape key="square" line_type="solid" shading="white"/>
+  </diagram>
+  <diagram id="circle-grey">
+    <shape key="circle" line_type="solid" shading="grey"/>
+  </diagram>
+  <diagram id="triangle-partitioned">
+    <shape key="triangle" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="square-vertical-partition">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="33" shading="white"/>
+        <section low="33" high="66" shading="grey_light"/>
+        <section low="66" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+</diagrams>

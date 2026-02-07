@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+  <!-- pentagon container, solid, fill; 0 none motifs -->
+  <defs><clipPath id="shapeClip"><path d="M 50.00 12.00 L 86.14 38.26 L 72.34 80.74 L 27.66 80.74 L 13.86 38.26 Z"/></clipPath></defs>
+  <path d="M 50.00 12.00 L 86.14 38.26 L 72.34 80.74 L 27.66 80.74 L 13.86 38.26 Z" fill="none" stroke-width="2"  />
+  <g clip-path="url(#shapeClip)">
+  <path d="M 50.00 31.00 L 68.07 44.13 L 61.17 65.37 L 38.83 65.37 L 31.93 44.13 Z" fill="none" stroke="none" fill-rule="evenodd"/>
+  <path d="M 50.00 12.00 L 86.14 38.26 L 72.34 80.74 L 27.66 80.74 L 13.86 38.26 Z M 50.00 31.00 L 68.07 44.13 L 61.17 65.37 L 38.83 65.37 L 31.93 44.13 Z" fill="#808080" stroke="none" fill-rule="evenodd"/>
+  </g>
+  <path d="M 50.00 12.00 L 86.14 38.26 L 72.34 80.74 L 27.66 80.74 L 13.86 38.26 Z" fill="none" stroke-width="2"  />
+  <g clip-path="url(#shapeClip)">
+  <line x1="50.00" y1="31.00" x2="68.07" y2="44.13" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="68.07" y1="44.13" x2="61.17" y2="65.37" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="61.17" y1="65.37" x2="38.83" y2="65.37" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="38.83" y1="65.37" x2="31.93" y2="44.13" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="31.93" y1="44.13" x2="50.00" y2="31.00" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  </g>
+</svg>

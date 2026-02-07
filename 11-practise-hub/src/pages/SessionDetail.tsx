@@ -10,6 +10,7 @@ import { fetchSubjects, getSubjectById } from '@/data/subjects';
 import { SessionWithDetails, QuestionWithOptions } from '@/types';
 import { Subject } from '@/types';
 import { MathText } from '@/components/MathText';
+import { OptionDisplay } from '@/components/OptionDisplay';
 import { CheckCircle, XCircle, ArrowLeft, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -209,9 +210,15 @@ export default function SessionDetail() {
                             <span
                               className={`font-medium ${isCorrect ? 'text-green-600' : 'text-destructive'}`}
                             >
-                              {selectedOption
-                                ? <MathText component="span">{selectedOption.option_text}</MathText>
-                                : 'Not answered'}
+                              {selectedOption ? (
+                                <OptionDisplay
+                                  option_text={selectedOption.option_text}
+                                  option_image_url={selectedOption.option_image_url}
+                                  size="small"
+                                />
+                              ) : (
+                                'Not answered'
+                              )}
                             </span>
                           </div>
                           {!isCorrect && correctOption && (
@@ -220,7 +227,11 @@ export default function SessionDetail() {
                                 Correct answer:
                               </span>
                               <span className="font-medium text-green-600">
-                                <MathText component="span">{correctOption.option_text}</MathText>
+                                <OptionDisplay
+                                  option_text={correctOption.option_text}
+                                  option_image_url={correctOption.option_image_url}
+                                  size="small"
+                                />
                               </span>
                             </div>
                           )}

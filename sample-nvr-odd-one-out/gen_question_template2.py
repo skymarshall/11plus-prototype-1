@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate 5 answer-option SVGs for Example Question Template 2 (picture-based-questions-guide.md).
+Generate 5 answer-option SVGs for Example Question Template 2 (question-gen/QUESTION-GENERATION-DESIGN.md §4).
 
 Template 2:
   Setup: Each answer is a common shape partitioned into sections using different shading.

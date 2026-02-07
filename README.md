@@ -53,18 +53,14 @@ Run insert scripts **after** `create_11plus_supabase.sql`.
 ### Design and planning (root)
 
 - **`11plus-datamodel-design.md`** – Data model: tables, relationships, image support, option ordering, session/attempt recording.
-- **`picture-based-questions-guide.md`** – How picture-based (e.g. NVR) questions work: vocab (symbols, line types, shading), polygon containers, verbal templates, parameter/variator/differentiator rules.
+- **`question-gen/QUESTION-GENERATION-DESIGN.md`** – Question generation pipeline and NVR: workflow, vocab (shape containers, motifs, line types, shading), verbal templates, parameter/variator/differentiator rules, storage/DB/insert (§4, §9).
 - **`nvr-symbol-svg-design.md`** – NVR symbol SVG design and layout rules.
 - **`math-formulae-markup-plan.md`** – Plan for LaTeX/KaTeX in the DB and website.
 
-### NVR symbols and sample generator
+### NVR symbols and question generation
 
-- **`nvr-symbols/`** – SVG symbol set (circle, club, spade, heart, diamond, plus, square, triangle, star) used by the NVR option generator.
-- **`sample-nvr-odd-one-out/`** – Python scripts to generate NVR odd-one-out answer-option SVGs from the picture-based-questions guide:
-  - **`lib/`** – NVR Python library: `nvr_logic_*` (reusable logic) and `nvr_draw_*` (shape/SVG generators). E.g. **`lib/nvr_draw_container_svg.py`** – shape container (optionally with motifs); **`lib/nvr_logic_param_splits.py`** – allowed parameter splits for odd-one-out.
-  - **`gen_question_template1.py`** – Five options for Example Template 1 (differentiator + 3–5 variators; see guide §5).
-  - **`gen_sample_motif_shape_combinations.py`** – One SVG per (shape, motif) combination (e.g. option-square-5-clubs.svg) for asset check.
-  - **`PICTURE-DESCRIPTIONS.md`** – Text descriptions for sample NVR questions.
+- **`nvr-symbols/`** – SVG symbol set (circle, club, spade, heart, diamond, plus, square, triangle, star) used by the NVR renderer.
+- **`question-gen/`** – Question XML design, XSD, and XML→SVG renderer; sample XML and batch script. See **question-gen/QUESTION-GENERATION-DESIGN.md** and **QUESTION-XML-SPECIFICATION.md**.
 
 ---
 
@@ -92,17 +88,15 @@ Copy `.env.example` to `.env` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANO
 - A **Supabase** project (cloud or local via Supabase CLI).
 - Run `create_11plus_supabase.sql` in the Supabase SQL Editor, then the insert/delete scripts as needed.
 
-### For NVR Python scripts (`sample-nvr-odd-one-out/`)
+### For question-gen (XML→SVG)
 
 - **Python 3** (e.g. 3.10+). No extra packages required beyond the standard library.
 
 From the repo root:
 
 ```bash
-cd sample-nvr-odd-one-out
-python gen_question_template1.py
-python gen_question_template1.py --seed 42
-python lib/nvr_draw_container_svg.py club -n 10 -o option-club.svg
+cd question-gen
+python xml_to_svg.py sample/sample-partitioned-extensive.xml -o output
 ```
 
 ---
@@ -114,7 +108,7 @@ python lib/nvr_draw_container_svg.py club -n 10 -o option-club.svg
 | **Node.js + npm** (or Bun) | 11-practise-hub build and dev server |
 | **Supabase CLI** | Local Supabase (auth + DB) for the web app |
 | **Docker** | Usually required by Supabase CLI for `supabase start` |
-| **Python 3** | NVR SVG generation scripts in `sample-nvr-odd-one-out/` |
+| **Python 3** | question-gen XML→SVG renderer |
 
 ---
 

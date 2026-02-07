@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+  <!-- Single question (root or inside questions) -->
+  <xs:element name="question" type="QuestionType"/>
+
+  <xs:complexType name="QuestionType">
+    <xs:sequence>
+      <xs:element name="product" type="ProductType"/>
+      <xs:element name="question_text" type="xs:string"/>
+      <xs:element name="explanation" type="xs:string" minOccurs="0"/>
+      <xs:element name="options" type="OptionsType"/>
+      <xs:element name="correct" type="CorrectType"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:ID" use="required"/>
+    <xs:attribute name="template_id" type="xs:string"/>
+    <xs:attribute name="seed" type="xs:string"/>
+  </xs:complexType>
+
+  <!-- Multiple questions in one document -->
+  <xs:element name="questions">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="question" minOccurs="1" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Standalone diagrams for testing (no question metadata) -->
+  <xs:element name="diagrams">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="diagram" type="DiagramType" minOccurs="1" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="ProductType">
+    <xs:attribute name="subject_id" type="xs:string"/>
+    <xs:attribute name="subject_code" type="xs:string"/>
+    <xs:attribute name="topic_id" type="xs:string"/>
+    <xs:attribute name="topic_code" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="OptionsType">
+    <xs:sequence>
+      <xs:element name="option" type="OptionType" minOccurs="2" maxOccurs="12"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="OptionType">
+    <xs:sequence>
+      <xs:element name="diagram" type="DiagramType"/>
+    </xs:sequence>
+    <xs:attribute name="index" type="OptionIndexType" use="required"/>
+  </xs:complexType>
+
+  <xs:simpleType name="OptionIndexType">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="11"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="DiagramType">
+    <xs:choice>
+      <xs:element name="shape" type="ShapeType"/>
+      <xs:element name="stack" type="StackType"/>
+      <xs:element name="array" type="ArrayType"/>
+    </xs:choice>
+    <xs:attribute name="id" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="ShapeType">
+    <xs:sequence>
+      <xs:element name="partition" type="PartitionType" minOccurs="0"/>
+      <xs:choice minOccurs="0" maxOccurs="1">
+        <xs:element name="chaotic" type="ChaoticType"/>
+        <xs:element name="stack" type="StackType"/>
+        <xs:element name="array" type="ArrayType"/>
+      </xs:choice>
+      <xs:element name="placement" type="PlacementType" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute name="key" type="xs:string" use="required"/>
+    <xs:attribute name="line_type" type="xs:string"/>
+    <xs:attribute name="shading" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="PartitionType">
+    <xs:sequence>
+      <xs:element name="section" type="SectionType" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="type" use="required">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="horizontal"/>
+          <xs:enumeration value="vertical"/>
+          <xs:enumeration value="diagonal"/>
+          <xs:enumeration value="diagonal_slash"/>
+          <xs:enumeration value="diagonal_backslash"/>
+          <xs:enumeration value="concentric"/>
+          <xs:enumeration value="radial"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="SectionType">
+    <xs:attribute name="low" type="SectionBoundType" use="required"/>
+    <xs:attribute name="high" type="SectionBoundType" use="required"/>
+    <xs:attribute name="shading" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:simpleType name="SectionBoundType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="ChaoticType">
+    <xs:attribute name="motif_key" type="xs:string" use="required"/>
+    <xs:attribute name="count" type="xs:positiveInteger" use="required"/>
+    <xs:attribute name="symmetry">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="horizontal"/>
+          <xs:enumeration value="vertical"/>
+          <xs:enumeration value="diagonal_slash"/>
+          <xs:enumeration value="diagonal_backslash"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="PlacementType">
+    <xs:attribute name="constraint">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="centred"/>
+          <xs:enumeration value="randomly_within_region"/>
+          <xs:enumeration value="clustered_in_top_half"/>
+          <xs:enumeration value="clustered_in_bottom_half"/>
+          <xs:enumeration value="clustered_in_left_half"/>
+          <xs:enumeration value="clustered_in_right_half"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- Layout element: shape, stack, or array (recursive for nested layouts) -->
+  <xs:complexType name="StackType">
+    <xs:sequence>
+      <xs:choice minOccurs="2" maxOccurs="unbounded">
+        <xs:element name="shape" type="ShapeType"/>
+        <xs:element name="stack" type="StackType"/>
+        <xs:element name="array" type="ArrayType"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="spacing">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="tight"/>
+          <xs:enumeration value="medium"/>
+          <xs:enumeration value="loose"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="regularity">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="regular"/>
+          <xs:enumeration value="irregular"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="direction">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="up"/>
+          <xs:enumeration value="down"/>
+          <xs:enumeration value="right"/>
+          <xs:enumeration value="left"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="step">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="up"/>
+          <xs:enumeration value="down"/>
+          <xs:enumeration value="right"/>
+          <xs:enumeration value="left"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="ArrayType">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="repeated">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="shape" type="ShapeInArrayType"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:choice minOccurs="2" maxOccurs="unbounded">
+          <xs:element name="shape" type="ShapeType"/>
+          <xs:element name="stack" type="StackType"/>
+          <xs:element name="array" type="ArrayType"/>
+        </xs:choice>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="type" use="required">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="rectangular"/>
+          <xs:enumeration value="orbital"/>
+          <xs:enumeration value="triangular"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="rows" type="xs:positiveInteger"/>
+    <xs:attribute name="cols" type="xs:positiveInteger"/>
+    <xs:attribute name="count" type="xs:positiveInteger"/>
+  </xs:complexType>
+
+  <!-- Shape in array (repeated): key, line_type, shading only; used inside <repeated> -->
+  <xs:complexType name="ShapeInArrayType">
+    <xs:attribute name="key" type="xs:string" use="required"/>
+    <xs:attribute name="line_type" type="xs:string"/>
+    <xs:attribute name="shading" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:simpleType name="CorrectType">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="11"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

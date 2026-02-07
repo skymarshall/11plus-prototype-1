@@ -1,5 +1,5 @@
 """
-Weighted choice by frequency modifiers (picture-based-questions-guide.md §4).
+Weighted choice by frequency modifiers (question-gen/QUESTION-GENERATION-DESIGN.md §4, Frequency modifiers).
 
 Templates use **common**, **uncommon**, and **rare** to set probabilities.
 This module provides reusable weighted sampling for all question templates.

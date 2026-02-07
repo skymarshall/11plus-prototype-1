@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate one plain container SVG per possible shape (picture-based-questions-guide.md §3.1).
+Generate one plain container SVG per possible shape (question-gen/QUESTION-GENERATION-DESIGN.md §4, Shape containers).
 
 Each output is the shape outline only (no motifs). Uses lib/nvr_draw_container_svg.py --empty.
 Outputs to script_dir/output/: {shape}.svg (e.g. square.svg).

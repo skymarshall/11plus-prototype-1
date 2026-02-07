@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+  <!-- star container, solid, fill; 0 none motifs -->
+  <defs><clipPath id="shapeClip"><path d="M 50,5 L 60.1,36.09 L 92.8,36.09 L 66.35,55.31 L 76.45,86.41 L 50,67.19 L 23.55,86.41 L 33.65,55.31 L 7.2,36.09 L 39.9,36.09 Z" fill="none" stroke-width="2"/></clipPath></defs>
+  <path d="M 50,5 L 60.1,36.09 L 92.8,36.09 L 66.35,55.31 L 76.45,86.41 L 50,67.19 L 23.55,86.41 L 33.65,55.31 L 7.2,36.09 L 39.9,36.09 Z" fill="none" stroke-width="2"  />
+  <g clip-path="url(#shapeClip)">
+  <path d="M 50.00 5.00 L 50.00 5.00 L 50.00 67.19 L 50.00 67.19 L 23.55 86.41 L 33.65 55.31 L 7.20 36.09 L 39.90 36.09 L 50.00 5.00 Z" fill="#808080" stroke="none"/>
+  <path d="M 50.00 5.00 L 60.10 36.09 L 92.80 36.09 L 66.35 55.31 L 76.45 86.41 L 50.00 67.19 L 50.00 67.19 L 50.00 5.00 L 50.00 5.00 Z" fill="none" stroke="none"/>
+  </g>
+  <path d="M 50,5 L 60.1,36.09 L 92.8,36.09 L 66.35,55.31 L 76.45,86.41 L 50,67.19 L 23.55,86.41 L 33.65,55.31 L 7.2,36.09 L 39.9,36.09 Z" fill="none" stroke-width="2"  />
+  <g clip-path="url(#shapeClip)">
+  <line x1="50.00" y1="5.00" x2="50.00" y2="86.41" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  </g>
+</svg>

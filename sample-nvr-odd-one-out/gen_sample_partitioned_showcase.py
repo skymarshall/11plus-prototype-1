@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate a showcase of partition types with varied shading (picture-based-questions-guide.md §3.9).
+Generate a showcase of partition types with varied shading (question-gen/QUESTION-GENERATION-DESIGN.md §4, Partitioned shapes).
 All shapes use solid outlines only. Produces individual SVGs per partition type and one combined
 grid SVG (partitioned-showcase.svg) that references them.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate an SVG of an array of shape containers (picture-based-questions-guide.md, Concepts → Arrays).
+Generate an SVG of an array of shape containers (question-gen/QUESTION-GENERATION-DESIGN.md §4, Concepts → Arrays of shapes).
 
 An array is a regular grid of shapes with even spacing, horizontally aligned. Shapes are scaled
 uniformly so the array fits inside the diagram bounding box (viewBox 0 0 100 100).

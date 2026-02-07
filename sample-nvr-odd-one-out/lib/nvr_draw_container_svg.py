@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate a shape-container SVG (picture-based-questions-guide.md §3.1, §3.9).
+Generate a shape-container SVG (question-gen/QUESTION-GENERATION-DESIGN.md §4, Shape containers and Partitioned shapes).
 
 Can output:
   - A shape container only (--empty), for use as part of a larger drawing.

@@ -17,6 +17,7 @@ import { fetchSubjects, getSubjectById } from '@/data/subjects';
 import { QuestionWithOptions } from '@/types';
 import { Subject } from '@/types';
 import { MathText } from '@/components/MathText';
+import { OptionDisplay } from '@/components/OptionDisplay';
 import { ArrowLeft, ArrowRight, CheckCircle, BookOpen, X } from 'lucide-react';
 import {
   AlertDialog,
@@ -254,43 +255,79 @@ export default function Test() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <main className="container mx-auto px-4 py-6 max-w-3xl flex flex-col min-h-[calc(100vh-8rem)]">
         <Card>
-          <CardHeader>
+          <CardHeader className="text-center">
+            {currentQuestion.question_image_url && (
+              <img
+                src={currentQuestion.question_image_url}
+                alt=""
+                className="max-w-full max-h-48 object-contain mb-4 mx-auto"
+              />
+            )}
             <CardTitle className="text-xl leading-relaxed">
               <MathText component="span">{currentQuestion.question_text}</MathText>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <RadioGroup
-              value={answers[currentQuestion.id]?.toString() || ''}
-              onValueChange={(value) => handleSelectAnswer(parseInt(value))}
-              className="space-y-3"
-            >
-              {currentQuestion.options.map((option, index) => (
-                <div
-                  key={option.id}
-                  className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                    answers[currentQuestion.id] === option.id
-                      ? 'border-primary bg-primary/5'
-                      : 'hover:bg-muted/50'
-                  }`}
-                  onClick={() => handleSelectAnswer(option.id)}
-                >
-                  <RadioGroupItem value={option.id.toString()} id={`option-${option.id}`} />
-                  <Label
-                    htmlFor={`option-${option.id}`}
-                    className="flex-1 cursor-pointer text-base"
+            {currentQuestion.options.some((o) => o.option_image_url) ? (
+              <div className="flex flex-wrap justify-center gap-6">
+                {currentQuestion.options.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => handleSelectAnswer(option.id)}
+                    className={`rounded-xl border-2 p-5 cursor-pointer transition-colors flex flex-col items-center min-w-0 ${
+                      answers[currentQuestion.id] === option.id
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary'
+                        : 'border-border hover:bg-muted/50 hover:border-muted-foreground/30'
+                    }`}
                   >
-                    <MathText component="span">{option.option_text}</MathText>
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+                    <OptionDisplay
+                      option_text={option.option_text}
+                      option_image_url={option.option_image_url}
+                      size="large"
+                    />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <RadioGroup
+                value={answers[currentQuestion.id]?.toString() || ''}
+                onValueChange={(value) => handleSelectAnswer(parseInt(value))}
+                className="space-y-3"
+              >
+                {currentQuestion.options.map((option) => (
+                  <div
+                    key={option.id}
+                    className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${
+                      answers[currentQuestion.id] === option.id
+                        ? 'border-primary bg-primary/5'
+                        : 'hover:bg-muted/50'
+                    }`}
+                    onClick={() => handleSelectAnswer(option.id)}
+                  >
+                    <RadioGroupItem value={option.id.toString()} id={`option-${option.id}`} />
+                    <Label
+                      htmlFor={`option-${option.id}`}
+                      className="flex-1 cursor-pointer text-base flex items-center gap-3"
+                    >
+                      <OptionDisplay
+                        option_text={option.option_text}
+                        option_image_url={option.option_image_url}
+                        size="medium"
+                      />
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-between mt-8">
+        <div className="flex-1 min-h-0" aria-hidden />
+
+        <div className="flex items-center justify-between py-6 flex-shrink-0">
           <Button
             variant="outline"
             onClick={handlePrevious}
@@ -335,11 +372,13 @@ export default function Test() {
           )}
         </div>
 
-        {!allAnswered && isLastQuestion && (
-          <p className="text-center text-muted-foreground mt-4 text-sm">
-            Please answer all questions before submitting.
-          </p>
-        )}
+        <div className="h-12 flex items-center justify-center flex-shrink-0">
+          {isLastQuestion && !allAnswered && (
+            <p className="text-center text-muted-foreground text-sm">
+              Please answer all questions before submitting.
+            </p>
+          )}
+        </div>
       </main>
     </div>
   );

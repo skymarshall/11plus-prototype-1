@@ -1,5 +1,5 @@
 """
-Allowed parameter value splits for odd-one-out NVR questions (picture-based-questions-guide.md §5).
+Allowed parameter value splits for odd-one-out NVR questions (question-gen/QUESTION-GENERATION-DESIGN.md §4, Parameter choice rules).
 
 For random parameters that do not determine the answer, value counts across options must follow
 allowed splits so no single option is uniquely different. This module defines allowed splits per

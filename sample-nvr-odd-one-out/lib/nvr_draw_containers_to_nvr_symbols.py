@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate one SVG per shape container (picture-based-questions-guide.md §3.1) and write
+Generate one SVG per shape container (question-gen/QUESTION-GENERATION-DESIGN.md §4, Shape containers) and write
 them into the nvr-symbols directory. Files are named shape-<key>.svg (outline only).
 Motif and container outlines both use shape-*.svg (e.g. shape-club.svg, shape-square.svg).
 

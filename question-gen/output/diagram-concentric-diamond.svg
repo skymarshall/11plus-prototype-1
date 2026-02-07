@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+  <!-- diamond container, solid, fill; 0 none motifs -->
+  <defs><clipPath id="shapeClip"><path d="M50 5 Q50 50 95 50 Q50 50 50 95 Q50 50 5 50 Q50 50 50 5" fill="none" stroke-width="2"/></clipPath></defs>
+  <defs><clipPath id="shapeClip_sec0"><path d="M 50.00 27.50 Q 50.00 50.00 72.50 50.00 Q 50.00 50.00 50.00 72.50 Q 50.00 50.00 27.50 50.00 Q 50.00 50.00 50.00 27.50"/></clipPath></defs>
+  <defs><clipPath id="shapeClip_sec1" clip-rule="evenodd"><path d="M 50.00 5.00 Q 50.00 50.00 95.00 50.00 Q 50.00 50.00 50.00 95.00 Q 50.00 50.00 5.00 50.00 Q 50.00 50.00 50.00 5.00"/><path d="M 50.00 27.50 Q 50.00 50.00 72.50 50.00 Q 50.00 50.00 50.00 72.50 Q 50.00 50.00 27.50 50.00 Q 50.00 50.00 50.00 27.50"/></clipPath></defs>
+  <path d="M50 5 Q50 50 95 50 Q50 50 50 95 Q50 50 5 50 Q50 50 50 5" fill="none" stroke-width="2"  />
+  <g clip-path="url(#shapeClip)">
+  <rect x="0" y="0" width="100" height="100" fill="#808080" stroke="none" clip-path="url(#shapeClip_sec1)"/>
+  <rect x="0" y="0" width="100" height="100" fill="#fff" stroke="none" clip-path="url(#shapeClip_sec0)"/>
+  </g>
+  <path d="M50 5 Q50 50 95 50 Q50 50 50 95 Q50 50 5 50 Q50 50 50 5" fill="none" stroke-width="2"  />
+  <g clip-path="url(#shapeClip)">
+  <path d="M 50.00 27.50 Q 50.00 50.00 72.50 50.00 Q 50.00 50.00 50.00 72.50 Q 50.00 50.00 27.50 50.00 Q 50.00 50.00 50.00 27.50" fill="none" stroke="#000" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

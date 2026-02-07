@@ -10,6 +10,7 @@ import { fetchSubjects, getSubjectById } from '@/data/subjects';
 import { SessionWithDetails, QuestionWithOptions } from '@/types';
 import { Subject } from '@/types';
 import { MathText } from '@/components/MathText';
+import { OptionDisplay } from '@/components/OptionDisplay';
 import { CheckCircle, XCircle, ArrowLeft, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -175,27 +176,53 @@ export default function Results() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="pt-0">
-                      <div className="space-y-3 ml-8">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Your answer:</span>
-                            <span
-                              className={`font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}
-                            >
-                              {selectedOption
-                                ? <MathText component="span">{selectedOption.option_text}</MathText>
-                                : 'Not answered'}
-                            </span>
+                      <div className="space-y-4 ml-8">
+                        <div>
+                          <div className="flex flex-wrap justify-center gap-4">
+                            {question.options
+                              .slice()
+                              .sort((a, b) => a.display_order - b.display_order)
+                              .map((option) => {
+                                const isSelected = selectedOption?.id === option.id;
+                                const isCorrectOption = option.is_correct;
+                                return (
+                                  <div
+                                    key={option.id}
+                                    className={`flex flex-col items-center rounded-lg border-2 p-3 w-44 min-h-[220px] ${
+                                      isSelected && isCorrectOption
+                                        ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
+                                        : isSelected
+                                          ? 'border-red-500 bg-red-50 dark:bg-red-950/20'
+                                          : isCorrectOption
+                                            ? 'border-green-500 bg-green-50/50 dark:bg-green-950/10'
+                                            : 'border-border'
+                                    }`}
+                                  >
+                                    <div className="flex-1 flex flex-col items-center justify-center min-h-0">
+                                      <OptionDisplay
+                                        option_text={option.option_text}
+                                        option_image_url={option.option_image_url}
+                                        size="large"
+                                      />
+                                    </div>
+                                    <div className="mt-2 h-5 flex flex-col items-center justify-end text-xs font-medium flex-shrink-0">
+                                      {isSelected && (
+                                        <span className={isCorrectOption ? 'text-green-600' : 'text-red-600'}>
+                                          Your answer
+                                        </span>
+                                      )}
+                                      {isCorrectOption && !isSelected && (
+                                        <span className="text-green-600">Correct</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                           </div>
-                          {!isCorrect && correctOption && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">Correct answer:</span>
-                              <span className="font-medium text-green-600">
-                                <MathText component="span">{correctOption.option_text}</MathText>
-                              </span>
-                            </div>
-                          )}
                         </div>
+                        {selectedOption == null && (
+                          <p className="text-sm text-muted-foreground">Not answered</p>
+                        )}
                         {question.explanation && (
                           <div className="bg-muted/50 rounded-lg p-4 mt-4">
                             <p className="text-sm font-medium text-foreground mb-1">Explanation:</p>

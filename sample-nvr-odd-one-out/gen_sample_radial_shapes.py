@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate one SVG per shape, each partitioned into radial sections (picture-based-questions-guide.md §3.9).
+Generate one SVG per shape, each partitioned into radial sections (question-gen/QUESTION-GENERATION-DESIGN.md §4, Partitioned shapes).
 
 Uses the most natural number of radial sections per shape:
   - Regular polygons: same as side count (triangle→3, square→4, pentagon→5, hexagon→6, heptagon→7, octagon→8).

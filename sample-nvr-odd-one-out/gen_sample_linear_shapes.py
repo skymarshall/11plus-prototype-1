@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate one SVG per shape, each partitioned with a linear direction (vertical, horizontal, or diagonal)
-(picture-based-questions-guide.md §3.9).
+(question-gen/QUESTION-GENERATION-DESIGN.md §4, Partitioned shapes).
 
 For each shape:
   - Partition direction is chosen at random: vertical, horizontal, or diagonal (diagonal_slash or diagonal_backslash).

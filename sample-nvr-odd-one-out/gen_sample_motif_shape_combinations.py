@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate one SVG per possible container shape, each containing 10 random motifs (picture-based-questions-guide.md §3.1, §3.2).
+Generate one SVG per possible container shape, each containing 10 random motifs (question-gen/QUESTION-GENERATION-DESIGN.md §4, Shape containers and Motif dictionary).
 
 Each output is one shape container with N motifs of one type inside, randomly placed with no overlap.
 The motif type for each container is chosen at random from the motif dictionary. Uses lib/nvr_draw_container_svg.py.

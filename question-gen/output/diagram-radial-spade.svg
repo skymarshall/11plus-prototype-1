@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+  <!-- spade container, solid, fill; 0 none motifs -->
+  <defs><clipPath id="shapeClip"><path d="M50 10 C30 35 12 50 12 70 C12 85 30 90 45 80 C45 80 48 85 40 95 H60 C52 85 55 80 55 80 C70 90 88 85 88 70 C88 50 70 35 50 10 Z" fill="none" stroke-width="2"/></clipPath></defs>
+  <path d="M50 10 C30 35 12 50 12 70 C12 85 30 90 45 80 C45 80 48 85 40 95 H60 C52 85 55 80 55 80 C70 90 88 85 88 70 C88 50 70 35 50 10 Z" fill="none" stroke-width="2"  />
+  <g clip-path="url(#shapeClip)">
+  <path d="M 0.00 0.00 L 50.00 0.00 L 50.00 57.28 L 0.00 57.28 Z" fill="none" stroke="none"/>
+  <path d="M 50.00 0.00 L 100.00 0.00 L 100.00 57.28 L 50.00 57.28 Z" fill="#808080" stroke="none"/>
+  <path d="M 50.00 57.28 L 100.00 57.28 L 100.00 100.00 L 50.00 100.00 Z" fill="none" stroke="none"/>
+  <path d="M 0.00 57.28 L 50.00 57.28 L 50.00 100.00 L 0.00 100.00 Z" fill="#808080" stroke="none"/>
+  </g>
+  <path d="M50 10 C30 35 12 50 12 70 C12 85 30 90 45 80 C45 80 48 85 40 95 H60 C52 85 55 80 55 80 C70 90 88 85 88 70 C88 50 70 35 50 10 Z" fill="none" stroke-width="2"  />
+  <g clip-path="url(#shapeClip)">
+  <line x1="50.00" y1="0.00" x2="50.00" y2="100.00" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="0.00" y1="57.28" x2="100.00" y2="57.28" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="0.00" y1="57.28" x2="100.00" y2="57.28" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="50.00" y1="0.00" x2="50.00" y2="100.00" stroke="#000" stroke-width="0.8" stroke-linecap="round"/>
+  </g>
+</svg>

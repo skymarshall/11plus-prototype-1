@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate 5 answer-option SVGs for Example Question Template 1 (picture-based-questions-guide.md).
+Generate 5 answer-option SVGs for Example Question Template 1 (question-gen/QUESTION-GENERATION-DESIGN.md §4).
 
 Template 1:
   Setup: Each answer is a common shape containing a symbol layout.
@@ -9,24 +9,27 @@ Template 1:
   The odd one out differs on the differentiator only (or by layout symmetry when differentiator is symmetry; horizontal or vertical only).
   Fill is restricted to solid/white only (guide §3.6: symbols cannot appear on hatched areas).
 
-Follows picture-based-questions-guide.md §4 (terminology, frequency modifiers, allowed splits)
+Follows question-gen/QUESTION-GENERATION-DESIGN.md §4 (terminology, frequency modifiers, allowed splits)
 and §3 (vocabulary). Uses nvr_logic_frequency.py for weighted differentiator choice; nvr_logic_param_splits.py for splits;
 nvr_draw_container_svg.py for SVG. Common shape = regular shape or common irregular shape (guide 3.1).
 
 Usage:
   python gen_question_template1.py
   python gen_question_template1.py --seed 42
+  python gen_question_template1.py -o output/questions/q00001   # batch: write into per-question dir
   python gen_question_template1.py --differentiator shape --variators shape fill symbol
   python gen_question_template1.py --differentiator symmetry --symmetry-line any   # some H, some V, one none
   python gen_question_template1.py --differentiator symmetry --variators shape fill symbol
   python gen_question_template1.py --variators shape fill symbol
 
 If no --seed is given, a seed is chosen and printed so you can repeat the run.
+Output: option-a.svg … option-e.svg and question_meta.json (correct_index, template_id, seed, question_text, explanation) in the same directory. Default directory: <script_dir>/output; override with -o/--output-dir.
 
 Requires lib/nvr_logic_frequency.py, lib/nvr_logic_param_splits.py, and lib/nvr_draw_container_svg.py; nvr-symbols in parent.
 """
 
 import argparse
+import json
 import random
 import subprocess
 import sys
@@ -40,8 +43,9 @@ from nvr_logic_frequency import weighted_choice
 from nvr_logic_param_splits import ALLOWED_SPLITS, assign_split_to_indices, sample_split
 
 GENERATOR = SCRIPT_DIR / "lib" / "nvr_draw_container_svg.py"
-OUTPUT_DIR = SCRIPT_DIR / "output"
 OPTIONS = ["option-a.svg", "option-b.svg", "option-c.svg", "option-d.svg", "option-e.svg"]
+META_FILENAME = "question_meta.json"
+TEMPLATE_ID = "template1"
 N_OPTIONS = 5
 
 # All parameters (guide §5). symbol_count is numeric; others use vocab pools.
@@ -384,6 +388,34 @@ def _generate_options_symmetry(
     return options, correct_index
 
 
+def _explanation_for_template1(
+    options: list[dict], correct_index: int, differentiator: str
+) -> str:
+    """Build a one-line explanation for the odd-one-out (for questions.explanation)."""
+    letter = chr(ord("a") + correct_index)
+    correct_opt = options[correct_index]
+    # One representative wrong option (any option that is not the correct one)
+    wrong_index = 0 if correct_index != 0 else 1
+    wrong_opt = options[wrong_index]
+    if differentiator == "shape":
+        return f"The odd one out is option {letter}: it is the only {correct_opt['shape']}; the others are {wrong_opt['shape']}s."
+    if differentiator == "line_style":
+        return f"The odd one out is option {letter}: it is the only one with a {correct_opt['line_style']} outline; the others have {wrong_opt['line_style']}."
+    if differentiator == "fill":
+        return f"The odd one out is option {letter}: it is the only one with {correct_opt['fill']} fill; the others have {wrong_opt['fill']}."
+    if differentiator == "symbol":
+        return f"The odd one out is option {letter}: it is the only one containing {correct_opt['symbol']}s; the others contain {wrong_opt['symbol']}s."
+    if differentiator == "symbol_count":
+        n, m = correct_opt["symbol_count"], wrong_opt["symbol_count"]
+        return f"The odd one out is option {letter}: it has {n} symbol{'s' if n != 1 else ''}; the others have {m}."
+    if differentiator == "symmetry":
+        ls = correct_opt.get("layout_symmetry")
+        if ls:
+            return f"The odd one out is option {letter}: it is the only one with {ls} symmetry; the others differ."
+        return f"The odd one out is option {letter}: it is the only one without layout symmetry; the others have symmetry."
+    return f"The odd one out is option {letter}."
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate template 1 options (differentiator + 3–5 variators, guide §5)."
@@ -411,7 +443,16 @@ def main() -> None:
         choices=["horizontal", "vertical", "any"],
         help="When differentiator is symmetry: use this line option. 'any' = some options horizontal, some vertical, one none. Default: random.",
     )
+    parser.add_argument(
+        "-o", "--output-dir",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help="Directory for option SVGs and question_meta.json. Default: <script_dir>/output.",
+    )
     args = parser.parse_args()
+
+    output_dir = args.output_dir if args.output_dir is not None else SCRIPT_DIR / "output"
 
     if args.seed is None:
         args.seed = random.randrange(0, 2**32)
@@ -481,11 +522,11 @@ def main() -> None:
 
         # Run SVG generator for each option; retry whole generation if one fails (e.g. symmetry placement)
         svg_failed = False
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
         for i, out_name in enumerate(OPTIONS):
             opt = options[i]
             count = opt["symbol_count"]
-            out_path = OUTPUT_DIR / out_name
+            out_path = output_dir / out_name
             seed_i = (args.seed + 100 + attempt * N_OPTIONS + i) if args.seed is not None else None
             seed_arg = ["--seed", str(seed_i)] if seed_i is not None else []
             cmd = [
@@ -527,6 +568,23 @@ def main() -> None:
     else:
         raise SystemExit("SVG generator failed after multiple attempts.")
 
+    # Required metadata for batch script and database insert (python-script-standards.md §2)
+    question_text = "Which shape is the odd one out?"
+    explanation = _explanation_for_template1(options, correct_index, differentiator)
+    meta = {
+        "correct_index": correct_index,
+        "template_id": TEMPLATE_ID,
+        "seed": args.seed,
+        "question_text": question_text,
+        "explanation": explanation,
+        "variators": variators,
+        "differentiator": differentiator,
+    }
+    meta_path = output_dir / META_FILENAME
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2)
+    print(f"Wrote {meta_path}")
+
     print(f"Question: variators={variators}, differentiator={differentiator}, correct=option-{chr(ord('a') + correct_index)} ({OPTIONS[correct_index]})")
     for i in range(N_OPTIONS):
         opt = options[i]
@@ -547,7 +605,7 @@ def main() -> None:
             if is_correct:
                 s = f"**{s} (odd one out)**"
             parts.append(s)
-        print(f"  {OUTPUT_DIR / OPTIONS[i]}: {', '.join(parts)}{mark}")
+        print(f"  {output_dir / OPTIONS[i]}: {', '.join(parts)}{mark}")
 
 
 if __name__ == "__main__":

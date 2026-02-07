@@ -1,6 +1,6 @@
 # NVR Symbol SVG Fragments – Design
 
-This document defines **canonical SVG fragments** for every symbol in the NVR visual vocabulary (picture-based-questions-guide.md §4.1). All diagram SVGs must use these fragments so symbols look identical across questions.
+This document defines **canonical SVG fragments** for every symbol in the NVR visual vocabulary (question-gen/QUESTION-GENERATION-DESIGN.md §4, Shape containers). All diagram SVGs must use these fragments so symbols look identical across questions.
 
 ---
 

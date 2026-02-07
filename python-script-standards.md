@@ -28,7 +28,7 @@ Scripts are grouped into five categories. Each category has a **required filenam
 
 **Naming:** `nvr_logic_<name>.py` where `<name>` is a short, lowercase, underscore-separated identifier.
 
-**Location:** All `nvr_logic_*` scripts live in a **`lib/`** directory (e.g. `sample-nvr-odd-one-out/lib/`).
+**Location:** All `nvr_logic_*` scripts live in a **`lib/`** directory (e.g. `question-gen/lib/` or a project that uses the NVR draw logic).
 
 **Current:** `lib/nvr_logic_frequency.py`, `lib/nvr_logic_param_splits.py`.
 
@@ -48,7 +48,7 @@ Scripts are grouped into five categories. Each category has a **required filenam
 
 **Naming:** `nvr_draw_<description>.py` where `<description>` describes the output.
 
-**Location:** All `nvr_draw_*` scripts live in a **`lib/`** directory (e.g. `sample-nvr-odd-one-out/lib/`). `gen_*` scripts invoke them via `SCRIPT_DIR / "lib" / "nvr_draw_<name>.py"` or import from `lib/` after adding it to `sys.path`.
+**Location:** All `nvr_draw_*` scripts live in a **`lib/`** directory (e.g. `question-gen/lib/`). `gen_*` scripts invoke them via `SCRIPT_DIR / "lib" / "nvr_draw_<name>.py"` or import from `lib/` after adding it to `sys.path`.
 
 **Current scripts in this project:**
 
@@ -72,7 +72,7 @@ Scripts are grouped into five categories. Each category has a **required filenam
 
 **Prefix:** `gen_question_`
 
-**Purpose:** Scripts that implement a **question template** from the guide (e.g. picture-based-questions-guide.md §4) and produce the **full set of answer-option images** for one question (e.g. 5 options for odd-one-out).
+**Purpose:** Scripts that implement a **question template** from the design doc (e.g. question-gen/QUESTION-GENERATION-DESIGN.md §4) and produce the **full set of answer-option images** for one question (e.g. 5 options for odd-one-out).
 
 **Naming:** `gen_question_<template_id>.py` where `<template_id>` identifies the template (e.g. `template1`, `template2`, `odd_one_out_shape`).
 
@@ -86,8 +86,8 @@ Scripts are grouped into five categories. Each category has a **required filenam
 **Rules:**
 
 - **Expendable:** No substantial library logic; use `nvr_logic_*` and call `nvr_draw_*` as needed.
-- Must produce the **standard question output set** (see §2 below).
-- Docstring must cite the template (e.g. “Template 1”, “picture-based-questions-guide.md §4.1”) and list variators/differentiators.
+- Must produce the **standard question output set** (see §2): option images, **metadata file** with `correct_index`, `template_id`, `seed`, and a **CLI output-dir override** so the batch script can direct each run to a per-question folder.
+- Docstring must cite the template (e.g. “Template 1”, “question-gen/QUESTION-GENERATION-DESIGN.md §4”) and list variators/differentiators.
 
 ---
 
@@ -134,26 +134,24 @@ Scripts are grouped into five categories. Each category has a **required filenam
 
 ## 2. Output files for question generation scripts
 
-Any script in the **gen_question_** category must produce the following.
+Any script in the **gen_question_** category must produce the following. These requirements allow a **batch question-generation script** (see question-gen design doc and any QUESTION-GENERATION-BATCH.md) to run templates many times, capture output per question, and produce a manifest for database insert.
 
 ### 2.1 Required outputs
 
 - **Option images:** One image file per answer option. For a 5-option multiple-choice question:
   - `option-a.svg`, `option-b.svg`, `option-c.svg`, `option-d.svg`, `option-e.svg`
   - Or equivalent names (e.g. `option-1.svg` … `option-5.svg`) if the project standard differs.
-- **Location:** All option images for a single run must be written into the **same directory**. Default: `<script_dir>/output/`. Overridable via CLI (e.g. `--output-dir`).
+- **Location:** All option images for a single run must be written into the **same directory**. Default: `<script_dir>/output/`.
+- **Output directory override (required):** The script **must** accept a CLI argument that sets the directory into which all option images and the metadata file are written (e.g. `--output-dir <dir>` or `-o <dir>`). When provided, the script writes **only** into that directory (no side-effect paths). This allows the batch script to run the template once per question and direct each run to e.g. `output/questions/q00001/`.
+- **Metadata file (required):** The script **must** write a small JSON file in the **same directory** as the option images. Filename: `question_meta.json` (or `options_meta.json`). Required fields:
+  - **`correct_index`** — integer 0–4 (0 = option-a, 1 = option-b, …) so the batch and insert step know which option is correct.
+  - **`template_id`** — string identifying the template (e.g. `"template1"`, `"template2"`).
+  - **`seed`** — integer used for the run (for reproducibility).
+  Recommended when available: variators/differentiator (e.g. for debugging). Optional: **`question_text`**, **`explanation`** (post-answer hint for `questions.explanation`); if the template can generate a one-line explanation (e.g. from the differentiator and correct option), include it so the batch manifest can carry it through to insert.
 
-### 2.2 Optional but recommended outputs
+### 2.2 What must not be required
 
-- **Metadata (optional):** A small JSON or text file in the same directory that records:
-  - Which option is the correct answer (e.g. `correct_option: "b"` or `correct_index: 1`).
-  - Template id and seed (e.g. `template_id: "template1"`, `seed: 42`) so the run is reproducible.
-  - Variators/differentiator used (e.g. for debugging or authoring).
-- **Naming:** e.g. `question_meta.json` or `options_meta.json` in the same directory as the option SVGs.
-
-### 2.3 What must not be required
-
-- A question generation script is **not** required to produce question text, database rows, or URLs. It is only required to produce the **option image files** (and optionally the metadata file) so that other tools or the site can attach them to questions.
+- A question generation script is **not** required to produce database rows or URLs. It is only required to produce the **option image files**, the **metadata file**, and the **output-dir override** so that the batch script and other tools can attach them to questions and build INSERTs (see QUESTION-GENERATION-BATCH.md).
 
 ---
 
@@ -163,7 +161,7 @@ Any script in the **gen_question_** category must produce the following.
 |----------------|----------------|-------------|----------------------------------|----------------------------|
 | **Logic**      | `nvr_logic_`   | No          | Reusable logic (imported by gen_*, nvr_draw_*) | —                          |
 | Draw/shape     | `nvr_draw_`    | **No**      | Building blocks; hold core shape/motif logic | Per-script (see docstring) |
-| Question       | `gen_question_`| Yes         | Full question option set         | §2: option-a.svg … (+ optional meta) |
+| Question       | `gen_question_`| Yes         | Full question option set         | §2: option-a.svg … + question_meta.json; output-dir override |
 | Sample         | `gen_sample_`  | Yes         | Demos, samples, showcases        | Per-script (e.g. under `output/`) |
 | Temporary      | `gen_temp_`    | Yes         | One-off / exploratory (Cursor)   | Ad hoc; may be throwaway   |
 
@@ -171,6 +169,6 @@ Any script in the **gen_question_** category must produce the following.
 
 ## 4. Migration note
 
-**Migration completed:** Scripts in `sample-nvr-odd-one-out/` have been renamed to the standard prefixes. When adding new scripts, use the prefixes above. Keep references (imports, subprocess calls, batch files, docs) in sync with these names.
+When adding new scripts, use the prefixes above. Keep references (imports, subprocess calls, batch files, docs) in sync with these names.
 
 **Logic vs draw vs generators:** Reusable logic belongs in **nvr_logic_***. **nvr_draw_*** scripts are **not** expendable—they contain the core shape/motif/partition logic; do not delete them without moving that logic to nvr_logic_* first. **gen_question_***, **gen_sample_***, and **gen_temp_*** are expendable; keep them thin (orchestrate only; use nvr_logic_* and nvr_draw_*). When adding or rewriting an expendable gen_* script, keep any reusable logic in nvr_logic_*.

@@ -1,0 +1,887 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Extensive partitioned-shape test for question-gen XML→SVG renderer. -->
+<diagrams>
+  <!-- === Horizontal === -->
+  <diagram id="horizontal-square">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="horizontal-hexagon">
+    <shape key="hexagon" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="diagonal_slash"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="horizontal-octagon">
+    <shape key="octagon" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="horizontal-square-black">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="solid_black"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Vertical === -->
+  <diagram id="vertical-square">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-triangle">
+    <shape key="triangle" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="vertical_lines"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-octagon">
+    <shape key="octagon" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="horizontal_lines"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-circle-black">
+    <shape key="circle" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="solid_black"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Diagonal slash (/) === -->
+  <diagram id="diagonal_slash-square">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-hexagon">
+    <shape key="hexagon" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="diagonal_slash"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-octagon">
+    <shape key="octagon" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Diagonal backslash (\) === -->
+  <diagram id="diagonal_backslash-square">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-hexagon">
+    <shape key="hexagon" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-octagon">
+    <shape key="octagon" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="diagonal_backslash"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Concentric: circle === -->
+  <diagram id="concentric-circle">
+    <shape key="circle" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-circle-bands">
+    <shape key="circle" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="40" shading="white"/>
+        <section low="40" high="50" shading="grey"/>
+        <section low="50" high="60" shading="diagonal_slash"/>
+        <section low="60" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Concentric: square (polygon rings) === -->
+  <diagram id="concentric-square">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-square-bands">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="30" shading="white"/>
+        <section low="30" high="40" shading="grey"/>
+        <section low="40" high="60" shading="diagonal_slash"/>
+        <section low="60" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Concentric: octagon === -->
+  <diagram id="concentric-octagon">
+    <shape key="octagon" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-octagon-bands">
+    <shape key="octagon" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="35" shading="white"/>
+        <section low="35" high="45" shading="grey"/>
+        <section low="45" high="55" shading="vertical_lines"/>
+        <section low="55" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Radial === -->
+  <diagram id="radial-circle">
+    <shape key="circle" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="16.67" shading="white"/>
+        <section low="16.67" high="33.33" shading="grey"/>
+        <section low="33.33" high="50" shading="white"/>
+        <section low="50" high="66.67" shading="grey"/>
+        <section low="66.67" high="83.33" shading="white"/>
+        <section low="83.33" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-triangle">
+    <shape key="triangle" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="horizontal_lines"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-square">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-hexagon">
+    <shape key="hexagon" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="16.67" shading="white"/>
+        <section low="16.67" high="33.33" shading="grey"/>
+        <section low="33.33" high="50" shading="white"/>
+        <section low="50" high="66.67" shading="grey"/>
+        <section low="66.67" high="83.33" shading="white"/>
+        <section low="83.33" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-rectangle">
+    <shape key="rectangle" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="grey_light"/>
+        <section low="75" high="100" shading="diagonal_slash"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-pentagon-black">
+    <shape key="pentagon" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="20" shading="white"/>
+        <section low="20" high="40" shading="solid_black"/>
+        <section low="40" high="60" shading="grey"/>
+        <section low="60" high="80" shading="solid_black"/>
+        <section low="80" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Pentagon and diagonal (generic) === -->
+  <diagram id="diagonal-pentagon">
+    <shape key="pentagon" line_type="solid" shading="white">
+      <partition type="diagonal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey_light"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Circle: linear only (no diagonal) === -->
+  <diagram id="horizontal-circle">
+    <shape key="circle" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-circle">
+    <shape key="circle" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Semicircle: horizontal, vertical, concentric, radial (3) === -->
+  <diagram id="horizontal-semicircle">
+    <shape key="semicircle" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-semicircle">
+    <shape key="semicircle" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="grey_light"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-semicircle">
+    <shape key="semicircle" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-semicircle">
+    <shape key="semicircle" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="horizontal_lines"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Pentagon: horizontal, vertical, concentric === -->
+  <diagram id="horizontal-pentagon">
+    <shape key="pentagon" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-pentagon">
+    <shape key="pentagon" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-pentagon">
+    <shape key="pentagon" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Heptagon: horizontal, radial (7) === -->
+  <diagram id="horizontal-heptagon">
+    <shape key="heptagon" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-heptagon">
+    <shape key="heptagon" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="14.29" shading="white"/>
+        <section low="14.29" high="28.57" shading="grey"/>
+        <section low="28.57" high="42.86" shading="white"/>
+        <section low="42.86" high="57.14" shading="grey"/>
+        <section low="57.14" high="71.43" shading="white"/>
+        <section low="71.43" high="85.71" shading="grey"/>
+        <section low="85.71" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Right-angled triangle: horizontal, vertical, radial (4) === -->
+  <diagram id="horizontal-right_angled_triangle">
+    <shape key="right_angled_triangle" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-right_angled_triangle">
+    <shape key="right_angled_triangle" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-right_angled_triangle">
+    <shape key="right_angled_triangle" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Rectangle: horizontal, vertical, diagonals === -->
+  <diagram id="horizontal-rectangle">
+    <shape key="rectangle" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-rectangle">
+    <shape key="rectangle" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-rectangle">
+    <shape key="rectangle" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-rectangle">
+    <shape key="rectangle" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Cross: horizontal, vertical, concentric, radial (4) === -->
+  <diagram id="horizontal-cross">
+    <shape key="cross" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-cross">
+    <shape key="cross" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-cross">
+    <shape key="cross" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-cross">
+    <shape key="cross" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Arrow: horizontal, vertical, diagonals, concentric, radial (4) === -->
+  <diagram id="horizontal-arrow">
+    <shape key="arrow" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-arrow">
+    <shape key="arrow" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-arrow">
+    <shape key="arrow" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-arrow">
+    <shape key="arrow" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-arrow">
+    <shape key="arrow" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-arrow">
+    <shape key="arrow" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- === Symbol shapes: plus, times, club, heart, diamond, spade, star — all partition types where permitted === -->
+  <!-- Plus: horizontal, vertical, diagonal_slash, diagonal_backslash, concentric, radial (4) -->
+  <diagram id="horizontal-plus">
+    <shape key="plus" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-plus">
+    <shape key="plus" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-plus">
+    <shape key="plus" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-plus">
+    <shape key="plus" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-plus">
+    <shape key="plus" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-plus">
+    <shape key="plus" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- Times -->
+  <diagram id="horizontal-times">
+    <shape key="times" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-times">
+    <shape key="times" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-times">
+    <shape key="times" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-times">
+    <shape key="times" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-times">
+    <shape key="times" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-times">
+    <shape key="times" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- Club -->
+  <diagram id="horizontal-club">
+    <shape key="club" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-club">
+    <shape key="club" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-club">
+    <shape key="club" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-club">
+    <shape key="club" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-club">
+    <shape key="club" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-club">
+    <shape key="club" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- Heart -->
+  <diagram id="horizontal-heart">
+    <shape key="heart" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-heart">
+    <shape key="heart" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-heart">
+    <shape key="heart" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-heart">
+    <shape key="heart" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-heart">
+    <shape key="heart" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-heart">
+    <shape key="heart" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- Diamond -->
+  <diagram id="horizontal-diamond">
+    <shape key="diamond" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-diamond">
+    <shape key="diamond" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-diamond">
+    <shape key="diamond" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-diamond">
+    <shape key="diamond" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-diamond">
+    <shape key="diamond" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-diamond">
+    <shape key="diamond" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- Spade -->
+  <diagram id="horizontal-spade">
+    <shape key="spade" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-spade">
+    <shape key="spade" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-spade">
+    <shape key="spade" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-spade">
+    <shape key="spade" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-spade">
+    <shape key="spade" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-spade">
+    <shape key="spade" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="25" shading="white"/>
+        <section low="25" high="50" shading="grey"/>
+        <section low="50" high="75" shading="white"/>
+        <section low="75" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- Star (radial 5 sections) -->
+  <diagram id="horizontal-star">
+    <shape key="star" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="vertical-star">
+    <shape key="star" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_slash-star">
+    <shape key="star" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="diagonal_backslash-star">
+    <shape key="star" line_type="solid" shading="white">
+      <partition type="diagonal_backslash">
+        <section low="0" high="50" shading="grey"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="concentric-star">
+    <shape key="star" line_type="solid" shading="white">
+      <partition type="concentric">
+        <section low="0" high="33.33" shading="white"/>
+        <section low="33.33" high="66.67" shading="grey"/>
+        <section low="66.67" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+  <diagram id="radial-star">
+    <shape key="star" line_type="solid" shading="white">
+      <partition type="radial">
+        <section low="0" high="20" shading="white"/>
+        <section low="20" high="40" shading="grey"/>
+        <section low="40" high="60" shading="white"/>
+        <section low="60" high="80" shading="grey"/>
+        <section low="80" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+</diagrams>
