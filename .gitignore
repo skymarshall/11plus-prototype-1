@@ -30,6 +30,9 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
+# question-gen generated SVGs (regenerate with xml_to_svg.py)
+question-gen/output/
+
 # Python
 __pycache__/
 *.py[cod]
