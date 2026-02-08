@@ -9,35 +9,61 @@
     <option index="0">
       <diagram>
         <shape key="square" line_type="solid" shading="white">
-          <chaotic motif_key="circle" count="4"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
     <option index="1">
       <diagram>
         <shape key="circle" line_type="dashed" shading="grey_light">
-          <chaotic motif_key="circle" count="4"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
     <option index="2">
       <diagram>
         <shape key="triangle" line_type="solid" shading="white">
-          <chaotic motif_key="circle" count="5"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
     <option index="3">
       <diagram>
         <shape key="hexagon" line_type="solid" shading="white">
-          <chaotic motif_key="circle" count="4"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
     <option index="4">
       <diagram>
         <shape key="pentagon" line_type="dotted" shading="grey_light">
-          <chaotic motif_key="circle" count="4"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>

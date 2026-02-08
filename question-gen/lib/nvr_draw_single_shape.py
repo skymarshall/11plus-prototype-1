@@ -2,7 +2,7 @@
 Render a single shape container (optionally partitioned) to SVG.
 
 Uses nvr_draw_container_svg in this directory for drawing. Supports only shapes
-with no nested layout (no chaotic, stack, or array inside). See question-gen
+with no nested layout (no scatter, stack, or array inside). See question-gen
 QUESTION-XML-SPECIFICATION.md §6 (Shape) and §7 (Partition).
 """
 
@@ -28,8 +28,8 @@ PARTITION_TYPE_MAP = {
 
 
 def _has_nested_layout(shape_el: ET.Element) -> bool:
-    """True if shape has chaotic, stack, or array as a child."""
-    for tag in ("chaotic", "stack", "array"):
+    """True if shape has scatter, stack, or array as a child."""
+    for tag in ("scatter", "stack", "array"):
         if shape_el.find(tag) is not None:
             return True
     return False
@@ -62,6 +62,7 @@ def render_shape_to_svg(
     shape_el: ET.Element,
     *,
     motifs_dir: Path | None = None,
+    shape_clip_id: str | None = None,
 ) -> str:
     """
     Render a single <shape> element (no nested layout) to an SVG string.
@@ -69,13 +70,14 @@ def render_shape_to_svg(
     - shape_el: XML Element with tag "shape", attributes key, optional line_type, shading.
     - Optional partition child: type + section(s) with low, high, shading.
     - motifs_dir: Passed to container for symbol shapes (plus, times, club, etc.). Default: repo root nvr-symbols.
+    - shape_clip_id: When set, used as the clipPath id for partitioned sections (avoids duplicate ids when multiple partitioned shapes are in one document).
 
     Returns SVG document string (viewBox 0 0 100 100).
     """
     if shape_el.tag != "shape":
         raise ValueError(f"Expected <shape>, got <{shape_el.tag}>")
     if _has_nested_layout(shape_el):
-        raise ValueError("Shape has nested layout (chaotic/stack/array); only single shape (optionally partitioned) is supported")
+        raise ValueError("Shape has nested layout (scatter/stack/array); only single shape (optionally partitioned) is supported")
 
     key = (shape_el.get("key") or "").strip().lower()
     if not key:
@@ -99,6 +101,9 @@ def render_shape_to_svg(
     partition_el = shape_el.find("partition")
     if partition_el is not None:
         partition_direction, section_bounds, section_fills = _parse_partition(partition_el)
+        opaque = (shape_el.get("opaque") or "true").strip().lower() not in ("false", "0")
+        if opaque:
+            section_fills = [s if s != "white" else "white_fill" for s in section_fills]
         partition_defs, partition_fill_content, partition_lines, partition_paths = container.build_partitioned_sections(
             key,
             path_d,
@@ -107,6 +112,7 @@ def render_shape_to_svg(
             partition_direction,
             section_bounds,
             section_fills,
+            shape_clip_id=shape_clip_id or "shapeClip",
             symbol_transform=symbol_transform,
             symbol_path_element=symbol_path_element,
         )
@@ -118,7 +124,10 @@ def render_shape_to_svg(
         partition_fill_content = None
         partition_lines = None
         partition_paths = None
-        solid = {"solid_black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white": "none", "white_fill": "#fff"}
+        # Default: opaque fill so stacks display correctly (white = #fff). Set opaque="false" for transparent fill when needed.
+        opaque = (shape_el.get("opaque") or "true").strip().lower() not in ("false", "0")
+        solid = {"solid_black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white_fill": "#fff"}
+        solid["white"] = "#fff" if opaque else "none"
         hatch_keys = ("diagonal_slash", "diagonal_backslash", "horizontal_lines", "vertical_lines")
         if shading in solid:
             polygon_fill = solid[shading]
@@ -134,6 +143,7 @@ def render_shape_to_svg(
             polygon_fill_defs = None
             polygon_hatch_lines = None
 
+    clip_id = (shape_clip_id or "shapeClip") if partition_el is not None else "shapeClip"
     return container.build_svg(
         motif_content="",
         positions=[],
@@ -155,6 +165,7 @@ def render_shape_to_svg(
         partition_paths=partition_paths,
         motif_fill="#000",
         symbol_transform=symbol_transform,
+        shape_clip_id=clip_id,
     )
 
 

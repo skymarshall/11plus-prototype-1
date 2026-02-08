@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Complex layout samples: larger arrays, grids, nulls, path variants, right-angled, partitioned shapes.
+     Render: python lib/nvr_draw_layout.py sample/sample-layouts-complex.xml -o output (use prefix=complex for filenames) -->
+<diagrams xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../question-xml.xsd">
+
+  <!-- 1. Larger square array: 3×3 repeated triangles -->
+  <diagram id="array-3x3-repeated">
+    <array type="rectangular" rows="3" cols="3">
+      <repeated>
+        <shape key="triangle" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+
+  <!-- 2. 3×3 explicit shapes, mixed -->
+  <diagram id="array-3x3-mixed">
+    <array type="rectangular" rows="3" cols="3">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="pentagon" shading="white"/>
+      <shape key="hexagon" shading="grey"/>
+      <shape key="circle" shading="solid_black"/>
+      <shape key="square" shading="grey_light"/>
+      <shape key="triangle" shading="white"/>
+      <shape key="circle" shading="grey"/>
+    </array>
+  </diagram>
+
+  <!-- 3. 3×3 with mesh (draw_mesh, draw_full_grid); renderer may ignore mesh for now -->
+  <diagram id="array-3x3-mesh">
+    <array type="rectangular" rows="3" cols="3" draw_mesh="true" draw_full_grid="true" mesh_line_type="solid">
+      <repeated>
+        <shape key="circle" shading="white"/>
+      </repeated>
+    </array>
+  </diagram>
+
+  <!-- 4. 2×2 with one null (one empty slot) -->
+  <diagram id="array-2x2-one-null">
+    <array type="rectangular" rows="2" cols="2">
+      <shape key="circle" shading="white"/>
+      <null/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+    </array>
+  </diagram>
+
+  <!-- 5. Right-angled triangular array: 3×3 with nulls, corner at bottom_left -->
+  <diagram id="array-right-angled-bottom-left">
+    <array type="rectangular" rows="3" cols="3" right_angle_corner="bottom_left" draw_mesh="true" draw_full_grid="false">
+      <shape key="circle" shading="white"/>
+      <null/>
+      <null/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <null/>
+      <shape key="pentagon" shading="white"/>
+      <shape key="hexagon" shading="grey"/>
+      <shape key="circle" shading="solid_black"/>
+    </array>
+  </diagram>
+
+  <!-- 6. Right-angled triangular array: corner top_right -->
+  <diagram id="array-right-angled-top-right">
+    <array type="rectangular" rows="3" cols="3" right_angle_corner="top_right">
+      <null/>
+      <null/>
+      <shape key="circle" shading="white"/>
+      <null/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="pentagon" shading="white"/>
+      <shape key="hexagon" shading="grey"/>
+      <shape key="circle" shading="solid_black"/>
+    </array>
+  </diagram>
+
+  <!-- 7. Loop on square path, vertices (4 shapes at corners) -->
+  <diagram id="loop-square-vertices">
+    <array type="loop" path_shape="square" positions="vertices" count="4" draw_path="true">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="hexagon" shading="white"/>
+    </array>
+  </diagram>
+
+  <!-- 8. Loop on square path, edges, 2 per edge (8 shapes); count=8 -->
+  <diagram id="loop-square-edges">
+    <array type="loop" path_shape="square" positions="edges" per_edge="2" count="8" draw_path="true">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="pentagon" shading="white"/>
+      <shape key="hexagon" shading="grey"/>
+      <shape key="circle" shading="solid_black"/>
+      <shape key="square" shading="grey_light"/>
+      <shape key="triangle" shading="white"/>
+    </array>
+  </diagram>
+
+  <!-- 9. Loop on triangle path, vertices (3 shapes) -->
+  <diagram id="loop-triangle-vertices">
+    <array type="loop" path_shape="triangle" positions="vertices" count="3" draw_path="true">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="solid_black"/>
+    </array>
+  </diagram>
+
+  <!-- 10. Loop on hexagon path, vertices (6 shapes) -->
+  <diagram id="loop-hexagon-vertices">
+    <array type="loop" path_shape="hexagon" positions="vertices" count="6" draw_path="true">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="pentagon" shading="white"/>
+      <shape key="hexagon" shading="grey"/>
+      <shape key="circle" shading="solid_black"/>
+    </array>
+  </diagram>
+
+  <!-- 11. Partitioned shape: square, horizontal two sections -->
+  <diagram id="shape-partitioned-horizontal">
+    <shape key="square" line_type="solid" shading="white">
+      <partition type="horizontal">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- 12. Partitioned shape: circle, vertical two sections -->
+  <diagram id="shape-partitioned-vertical">
+    <shape key="circle" line_type="solid" shading="white">
+      <partition type="vertical">
+        <section low="0" high="50" shading="grey_light"/>
+        <section low="50" high="100" shading="white"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- 13. Partitioned shape: triangle, diagonal partition -->
+  <diagram id="shape-partitioned-diagonal">
+    <shape key="triangle" line_type="solid" shading="white">
+      <partition type="diagonal_slash">
+        <section low="0" high="50" shading="white"/>
+        <section low="50" high="100" shading="grey"/>
+      </partition>
+    </shape>
+  </diagram>
+
+  <!-- 14. 4×4 grid, repeated -->
+  <diagram id="array-4x4-repeated">
+    <array type="rectangular" rows="4" cols="4" draw_mesh="true" draw_full_grid="true">
+      <repeated>
+        <shape key="circle" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+
+  <!-- 15. Triangular array, 10 elements, pointing down -->
+  <diagram id="array-triangular-10-down">
+    <array type="triangular" count="10" direction="down">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="pentagon" shading="white"/>
+      <shape key="hexagon" shading="grey"/>
+      <shape key="circle" shading="solid_black"/>
+      <shape key="square" shading="grey_light"/>
+      <shape key="triangle" shading="white"/>
+      <shape key="pentagon" shading="grey"/>
+      <shape key="hexagon" shading="white"/>
+    </array>
+  </diagram>
+</diagrams>

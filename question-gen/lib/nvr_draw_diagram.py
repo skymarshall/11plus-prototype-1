@@ -3,17 +3,17 @@
 Render question/diagrams XML to SVG files.
 
 Supports roots: question, questions, diagrams. For each diagram that is a
-**single shape container** (optionally with partition, no nested chaotic/stack/array),
-produces one SVG using the drawing module in lib (nvr_draw_container_svg).
+**single shape container** (optionally with partition, no nested scatter/stack/array),
+produces one SVG using nvr_draw_single_shape (nvr_draw_container_svg).
 Other diagrams are skipped (with a message).
 
-Usage:
-  python xml_to_svg.py path/to/file.xml [-o output_dir] [--prefix name]
-  python xml_to_svg.py path/to/diagrams.xml -o out/
+Usage (from question-gen root):
+  python lib/nvr_draw_diagram.py path/to/file.xml [-o output_dir] [--prefix name]
+  python lib/nvr_draw_diagram.py sample/sample-partitioned-extensive.xml -o output
 
 Output: one SVG per renderable diagram. With -o dir: diagram-0.svg, diagram-1.svg, ...
 or diagram-{id}.svg when diagram has id. With single question and single output, writes
-to the path given by -o if it ends with .svg.
+to the path given by -o if it ends with .svg. Default output: project output/ (parent of lib/).
 """
 
 from __future__ import annotations
@@ -23,12 +23,10 @@ import sys
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
-# Run from question-gen root: add lib to path so we can import single_shape_renderer
+import nvr_draw_single_shape as renderer
+
 _SCRIPT_DIR = Path(__file__).resolve().parent
-_LIB_DIR = _SCRIPT_DIR / "lib"
-if str(_LIB_DIR) not in sys.path:
-    sys.path.insert(0, str(_LIB_DIR))
-import single_shape_renderer as renderer
+_PROJECT_ROOT = _SCRIPT_DIR.parent
 
 
 def _iter_diagrams(root: ET.Element):
@@ -87,6 +85,8 @@ def main() -> int:
 
     xml_path = args.xml_path
     if not xml_path.is_file():
+        xml_path = _PROJECT_ROOT / xml_path
+    if not xml_path.is_file():
         print(f"Error: not a file: {xml_path}", file=sys.stderr)
         return 1
 
@@ -120,7 +120,7 @@ def main() -> int:
     prefix = args.prefix
 
     if out is None:
-        out = xml_path.parent / "output"
+        out = _PROJECT_ROOT / "output"
     out = out.resolve()
 
     if len(to_render) == 1 and out.suffix.lower() == ".svg":

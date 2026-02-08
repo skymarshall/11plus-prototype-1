@@ -1,0 +1,35 @@
+# Reduce Cursor memory use: exclude from indexing and from AI context
+
+# Dependencies (large, rarely needed in context)
+node_modules/
+
+# Python (bytecode and envs)
+__pycache__/
+.venv/
+venv/
+env/
+*.pyc
+
+# Build and generated outputs
+dist/
+dist-ssr/
+question-gen/output/
+*.local
+
+# Secrets and logs (no need to index)
+.env
+.env.*
+*.log
+logs/
+
+# Binary lockfiles (e.g. Bun)
+*.lockb
+
+# Test coverage output (11-practise-hub)
+coverage/
+
+# Binary lockfiles (e.g. Bun)
+*.lockb
+
+# Test coverage output (11-practise-hub)
+coverage/

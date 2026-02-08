@@ -1436,7 +1436,7 @@ def build_partitioned_sections(
     # Normalize to CCW so _clip_segment_to_polygon (and band clipping) treats interior correctly; symbol paths are often clockwise.
     if vertices and len(vertices) >= 3:
         vertices = _ensure_ccw(vertices)
-    solid = {"solid_black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white": "none"}
+    solid = {"solid_black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white": "none", "white_fill": "#fff"}
     hatch_keys = ("diagonal_slash", "diagonal_backslash", "horizontal_lines", "vertical_lines")
     # ClipPath: use path in viewBox space. Sampling/vertices are never used for display (bbox only).
     rot = _parse_rotate_transform(symbol_transform) if symbol_transform else None
@@ -1805,6 +1805,7 @@ def build_svg(
     partition_paths: list[str] | None = None,
     motif_fill: str = "#000",
     symbol_transform: str | None = None,
+    shape_clip_id: str = "shapeClip",
 ) -> str:
     """Build shape-container SVG. For cross use stroke_lines (12 segments); else path_d_stroke or single path. symbol_transform wraps the shape path when present (e.g. times = plus rotated 45°). Partition (guide §3.9) optional; partition_paths are path d strings for curved separators (e.g. symbol concentric). Motifs are rendered with motif_fill (default black; guide §3.2 allows fill variation)."""
     stroke_dasharray = {"solid": "", "dashed": "8 4", "dotted": "2 4"}.get(line_style, "")
@@ -1835,7 +1836,7 @@ def build_svg(
         else:
             lines.extend(wrap_shape([path_line("none")]))
         # Clip section fills to shape (e.g. star radial wedges extend as circle sectors; shapeClip clips them)
-        lines.append('  <g clip-path="url(#shapeClip)">')
+        lines.append(f'  <g clip-path="url(#{shape_clip_id})">')
         lines.append(partition_fill_content)
         lines.append("  </g>")
         # Draw shape outline again so the border is the usual thickness (not hidden by dark fills).
@@ -1844,7 +1845,7 @@ def build_svg(
         else:
             lines.extend(wrap_shape([path_line("none")]))
         if partition_lines or partition_paths:
-            lines.append('  <g clip-path="url(#shapeClip)">')
+            lines.append(f'  <g clip-path="url(#{shape_clip_id})">')
             for x1, y1, x2, y2 in (partition_lines or []):
                 lines.append(f'  <line x1="{x1:.2f}" y1="{y1:.2f}" x2="{x2:.2f}" y2="{y2:.2f}" stroke="#000" stroke-width="{PARTITION_LINE_STROKE}" stroke-linecap="round"/>')
             for path_d in (partition_paths or []):

@@ -30,7 +30,7 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
-# question-gen generated SVGs (regenerate with xml_to_svg.py)
+# question-gen generated SVGs (regenerate with lib/nvr_draw_diagram.py)
 question-gen/output/
 
 # Python

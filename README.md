@@ -96,7 +96,7 @@ From the repo root:
 
 ```bash
 cd question-gen
-python xml_to_svg.py sample/sample-partitioned-extensive.xml -o output
+python lib/nvr_draw_diagram.py sample/sample-partitioned-extensive.xml -o output
 ```
 
 ---

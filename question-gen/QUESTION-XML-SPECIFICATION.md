@@ -16,7 +16,7 @@ A valid question XML document has **exactly one root element**, which must be on
 |--------------|-----|---------|
 | **`question`** | Single question (production or one-off). | One full question (product, question_text, options, correct). |
 | **`questions`** | Multiple questions in one file. | One or more **`question`** elements (same structure as above). Each `question` must have a unique `id` within the document. |
-| **`diagrams`** | Standalone diagrams for testing. | One or more **`diagram`** elements. Each `diagram` has the same content model as the diagram inside an option (exactly one of: `shape`, `stack`, or `array`). No question metadata (no product, question_text, options, correct). Use for renderer tests or batch diagram authoring. |
+| **`diagrams`** | Standalone diagrams for testing. | One or more **`diagram`** elements. Each `diagram` has the same content model as the diagram inside an option (exactly one of: `shape`, `scatter`, `stack`, or `array`). No question metadata (no product, question_text, options, correct). Use for renderer tests or batch diagram authoring. |
 
 **Backward compatibility:** Files that use root **`question`** (single question) are unchanged. Tools that accept "question XML" should accept any of the three roots and process each `question` or each `diagram` as appropriate.
 
@@ -36,7 +36,7 @@ A valid question XML document has **exactly one root element**, which must be on
 ### 1.4 Standalone diagrams root: `diagrams`
 
 - **Element:** `diagrams`
-- **Children:** One or more **`diagram`** elements. Each **`diagram`** contains exactly one of: **`shape`**, **`stack`**, or **`array`** (same content model as the `diagram` element inside an option; see §5.3). No attributes are required on `diagrams` or on each `diagram`; optional `id` on each `diagram` may be used for labelling or test naming. Use this root when the goal is to define or render a list of diagrams without question text, options, or correct answer (e.g. renderer tests, visual regression, batch diagram authoring).
+- **Children:** One or more **`diagram`** elements. Each **`diagram`** contains exactly one of: **`shape`**, **`scatter`**, **`stack`**, or **`array`** (same content model as the `diagram` element inside an option; see §5.3). No attributes are required on `diagrams` or on each `diagram`; optional `id` on each `diagram` may be used for labelling or test naming. Use this root when the goal is to define or render a list of diagrams without question text, options, or correct answer (e.g. renderer tests, visual regression, batch diagram authoring).
 
 ### 1.5 Top-level children of `question` (in order)
 
@@ -52,7 +52,7 @@ A valid question XML document has **exactly one root element**, which must be on
 
 - **Single question (unchanged):** `<question id="q1">...</question>` as the only root.
 - **Multiple questions:** `<questions><question id="q1">...</question><question id="q2">...</question></questions>`. Each `question` has the full structure (product, question_text, options, correct); ids must be unique within the file.
-- **Standalone diagrams (testing):** `<diagrams><diagram id="d1"><shape key="square"/></diagram><diagram id="d2"><stack>...</stack></diagram></diagrams>`. No question metadata; each `diagram` is one of shape | stack | array. Optional `id` on each `diagram` for labelling.
+- **Standalone diagrams (testing):** `<diagrams><diagram id="d1"><shape key="square"/></diagram><diagram id="d2"><stack>...</stack></diagram></diagrams>`. No question metadata; each `diagram` is one of shape | scatter | stack | array. Optional `id` on each `diagram` for labelling.
 
 ---
 
@@ -101,11 +101,12 @@ At least one of `subject_id` or `subject_code` must be present. At least one of 
 
 - **Element:** `diagram`
 - **Children:** Exactly one **diagram element** (the root of the diagram structure). A diagram element is one of:
-  - `shape` — Single shape (default layout: **single centred**). May contain optional partition, **chaotic** (layout type chaotic), etc.
+  - `shape` — Single shape (default layout: **single centred**). May contain optional partition, **scatter** (layout type scatter), etc.
+  - `scatter` — **Layout type scatter** at top level: one or more child elements (`shape`, `stack`, or `array`) placed randomly inside the answer viewBox. See §8.
   - `stack` — **Layout type stack**: ordered list of elements (bottom to top); each element may be a shape or a nested layout (stack or array).
-  - `array` — **Layout type array**: rectangular, orbital, or triangular arrangement of elements; each element may be a shape or a nested layout (e.g. "array of two stacks").
+  - `array` — **Layout type array**: rectangular, loop, or triangular arrangement of elements; each element may be a shape or a nested layout (e.g. "array of two stacks").
 
-**Layout types:** Single centred (one shape), **chaotic** (e.g. multiple motifs inside a shape with irregular spacing), **stack**, and **array** are all layout types (see design doc §4). A layout may arrange any type of element: shapes, motifs (in any layout), or **nested layouts**. The diagram describes what to draw and how it is arranged; it does not specify pixel coordinates. The renderer uses the NVR vocabulary and layout rules in the design doc to produce SVG.
+**Layout types:** Single centred (one shape), **scatter** (elements placed randomly inside a bounding box; may contain shapes or other layouts), **stack**, and **array** are all layout types (see design doc §4). A layout may arrange any type of element: shapes, motifs (in any layout), or **nested layouts**. The diagram describes what to draw and how it is arranged; it does not specify pixel coordinates. The renderer uses the NVR vocabulary and layout rules in the design doc to produce SVG.
 
 ---
 
@@ -116,12 +117,15 @@ At least one of `subject_id` or `subject_code` must be present. At least one of 
   - `key` (required) — Shape container key from the design doc §4 (e.g. `circle`, `square`, `triangle`, `hexagon`, `star`). Must be a valid key from the shape containers tables.
   - `line_type` (optional) — Line type key: `solid`, `dashed`, `dotted`, `bold`. Default: `solid`.
   - `shading` (optional) — Fill/shading key for the shape: `solid_black`, `grey`, `grey_light`, `white`, `diagonal_slash`, `diagonal_backslash`, `horizontal_lines`, `vertical_lines`. Default per design (e.g. shape outline with optional fill).
+  - `opaque` (optional) — When `true` (default), white fill is rendered as opaque (#fff) and stroke as opaque so stacks and overlapping layouts display correctly. When `false`, white shading may be rendered as transparent (`fill="none"`) for question types that need transparency. Line/stroke remains opaque.
 - **Children (all optional):**
   - `partition` — Partition type and sections (see §7).
-  - **Exactly one layout** (at most one of): **`chaotic`** (layout type chaotic: multiple motifs with irregular spacing; see §8), **`stack`** (layout type stack: ordered elements bottom to top; see §9), or **`array`** (layout type array: rectangular, orbital, or triangular; see §10). A shape container can contain any type of layout—chaotic, stack, or array—or none (partition/shading only).
+  - **Exactly one content/layout** (at most one of): **`shape`** (single centred: one nested shape), **`scatter`** (layout type scatter: elements placed randomly inside the shape’s bounding box; see §8), **`stack`** (layout type stack: ordered elements bottom to top; see §9), or **`array`** (layout type array: rectangular, loop, or triangular; see §10). A shape container thus accepts the same options as the diagram root—nested shape, scatter, stack, or array—or none (partition/shading only).
   - `placement` — Placement constraint for this element (see §10).
 
-**Semantics:** One shape container. Unless a different layout is specified at the diagram root (stack/array), the diagram has a single centred element; this shape is that element, centred in the answer viewBox. If present, the shape’s content is drawn inside the shape according to the given layout type.
+**Semantics:** One shape container. Unless a different layout is specified at the diagram root (scatter/stack/array), the diagram has a single centred element; this shape is that element, centred in the answer viewBox. If present, the shape’s content is drawn inside the shape according to the given type (nested shape, scatter, stack, or array).
+
+**Scaling:** When a shape contains content (nested shape, scatter, stack, or array), that content is laid out and **scaled to fit** within the shape's bounding box. Contained shapes and layouts scale with the container so that everything fits. **Motifs** are an exception: they use **standardized sizing** (small/medium/large) and do not scale with the container (see design doc §3.4). **Nested perpendicular layouts:** The special scaling rule applies only to **rectangular** single-row/column arrays and stacks (not loop or triangular arrays). When such arrays or stacks are nested with the opposite orientation (e.g. vertical stack inside horizontal array), the renderer applies the design doc rule: only the minimum (greatest reduction) scale applies at the nested level; no reduction at the top level, so top-level bounding boxes may overlap—this avoids severe scaling and does not harm visibility (e.g. tall shapes in a horizontal row). Each layout may participate in this rule **at most once** in the nesting chain (e.g. 1h→2v→3h applies the rule at 2 only; 1v→2h→3v→4h applies it at 2 and at 4). Authors and renderers should ensure that nested content fits within the shape; avoid deep nesting or large counts if the container is small.
 
 ---
 
@@ -144,18 +148,16 @@ At least one of `subject_id` or `subject_code` must be present. At least one of 
 
 ---
 
-## 8. Chaotic (layout type: multiple motifs inside a shape)
+## 8. Scatter (layout type: random placement inside a bounding box)
 
-**Chaotic**, **array**, and **stack** are all layout types; the XML uses elements named to match: `chaotic`, `array`, `stack`. A **shape container** may contain **any** of these layout types (one of `chaotic`, `stack`, or `array` as a child of `shape`), or none (partition/shading only). Motifs may appear in any type of layout. This section describes the **chaotic** element: layout type chaotic — multiple motifs inside a shape with irregular (non-grid) spacing. Use the `chaotic` element when a shape contains **multiple motifs** arranged chaotically. (A single motif in a shape does not require a chaotic element; motifs as elements in an array or stack are encoded as shape/stack/array children.)
+**Scatter**, **array**, and **stack** are all layout types; the XML uses elements named to match: `scatter`, `array`, `stack`. A **shape container** may contain **any** of these layout types (one of `scatter`, `stack`, or `array` as a child of `shape`), or none (partition/shading only). A **scatter** is a **1-dimensional array of elements**: its children (one or more `shape`, `stack`, or `array`) are placed **randomly** inside the **bounding box** of the shape that contains it (or the top-level viewBox if the scatter is at the top level). Because placement is random, the scatter is **unordered for question logic**—there is no meaningful position order; only the set (count and type) matters.
 
-- **Element:** `chaotic`
+- **Element:** `scatter`
+- **Content:** One or more child elements, each a `shape`, `stack`, or `array`. The renderer places them randomly within the bounding box so they do not overlap (e.g. minimum centre-to-centre distance per design), with irregular spacing.
 - **Attributes:**
-  - `motif_key` (required) — Motif key from the design doc motif dictionary (e.g. `circle`, `square`, `heart`).
-  - `count` (required) — Positive integer, number of motifs.
-  - `symmetry` (optional) — When forcing symmetry of the motif arrangement: `horizontal`, `vertical`, `diagonal_slash`, or `diagonal_backslash`. Only motifs with that line of symmetry should be used (design doc §4).
+  - `symmetry` (optional) — When forcing symmetry of the arrangement: `horizontal`, `vertical`, `diagonal_slash`, or `diagonal_backslash`. Only shapes with that line of symmetry should be used (design doc §4).
 
-**Semantics:** The shape contains `count` motifs of type `motif_key`, placed so they do not overlap (e.g. minimum centre-to-centre distance per design), with irregular (non-grid) spacing. Symmetry forces mirror positions about the given line. **Motif rules (any layout):** Motifs cannot be partitioned; shading where motifs appear must be solid or white (no hatched/line shading).
-
+**Semantics:** The scatter's child elements are placed randomly within the bounding box. The scatter is **unordered for question logic** (no first/second/position order; only count and type matter). Symmetry forces mirror positions about the given line.
 ---
 
 ## 9. Stack
@@ -168,7 +170,7 @@ At least one of `subject_id` or `subject_code` must be present. At least one of 
   - `step` — Cross-axis offset so the stack reads as 3D (shapes “on top of” each other). Perpendicular to `direction`: for vertical stacks (up/down) use `right` or `left`; for horizontal stacks (left/right) use `up` or `down`. Default: `right` when direction is up; `down` when direction is right; renderer may derive from direction if omitted.
 - **Children:** Two or more **elements**. Each element is one of: `shape`, `stack`, or `array`. Order = draw order: **first** is bottom, **last** is top. **Prefer shapes as direct children**; use nested `stack` or `array` only when the question type requires it. Shapes may have `key`, `line_type`, `shading`, optional `partition`; nested stacks/arrays are defined by their own children.
 
-**Visibility constraints (see design doc):** (1) Stack children should in general be shapes. (2) Shapes that are **not** at the top of the stack should not contain a nested layout (no `chaotic`, `stack`, or `array` inside)—only the **last** (top) child may have a layout, so overlapping elements do not hide intended logic. (3) Partitions on shapes in stacks need extreme restriction; use only when necessary. (4) Partition type must align with stack `direction`: e.g. vertical partition with vertical stack (up/down), horizontal partition with horizontal stack (left/right); otherwise partitioned sections may be obscured by elements above.
+**Visibility constraints (see design doc):** (1) Stack children should in general be shapes. (2) Shapes that are **not** at the top of the stack should not contain a nested layout (no `scatter`, `stack`, or `array` inside)—only the **last** (top) child may have a layout, so overlapping elements do not hide intended logic. (3) Partitions on shapes in stacks need extreme restriction; use only when necessary. (4) Partition type must align with stack `direction`: e.g. vertical partition with vertical stack (up/down), horizontal partition with horizontal stack (left/right); otherwise partitioned sections may be obscured by elements above.
 
 **Semantics:** Layout type **stack**. Depth-ordered overlapping elements; each element partially overlaps the one(s) below. Spacing, regularity, direction, and **step** (cross-axis offset for 3D look) control how the stack is rendered (see design doc Layout (3.2) layout type: stack and stack terminology).
 
@@ -178,15 +180,19 @@ At least one of `subject_id` or `subject_code` must be present. At least one of 
 
 - **Element:** `array`
 - **Attributes:**
-  - `type` (required) — One of: `rectangular`, `orbital`, `triangular`.
-  - For `rectangular`: `rows` (required), `cols` (required) — Positive integers. Total elements = rows × cols.
-  - For `orbital`: `count` (required) — Positive integer; number of elements evenly placed on a circle.
-  - For `triangular`: `count` (required) — Total number of elements; formation is row 1 has 1, row 2 has 2, etc. (e.g. count=10 → rows 1,2,3,4).
+  - `type` (required) — One of: `rectangular`, `loop`, `triangular`.
+  - For `rectangular`: `rows` (required), `cols` (required) — Positive integers. Total elements = rows × cols. **Right-angled triangular array** is not a separate type: it is a rectangular (typically square) array with `null` in positions outside a right-angled triangle; template shorthand: "right angled triangular array" or "right angled" array. Positions outside the triangle must be null. **`right_angle_corner`** (optional) — Where the square corner (90° vertex) of the right-angled triangle is: `bottom_left` (default), `bottom_right`, `top_left`, `top_right`. Template: "right angled array, corner at bottom left" etc. When mesh is drawn with `draw_full_grid` false, mesh lines are never drawn to or from null positions (see mesh rule below).
+  - For `loop`: **Path** — `path_shape` (optional) — Shape key for the path; default `circle`. Any shape container key (e.g. `circle`, `square`, `triangle`, `hexagon`). The path follows that shape’s outline (circle = circumference; polygon = vertices and edges). **Placement** — `positions` (optional): `vertices` or `edges`; only for polygon path shapes. Default for polygon: `vertices`. For `circle`, elements are placed on the circumference (ignore `positions`). **Count** — `count` (required when path is circle, or when polygon + vertices and explicit count desired): number of elements on the path. When polygon + `positions="vertices"`, count may be omitted (implicit = number of vertices). When polygon + `positions="edges"`, `per_edge` (required) — positive integer; number of items evenly spaced on **each** edge; total elements = number of edges × per_edge.
+  - For `triangular`: `count` (required) — Total number of elements; formation is row 1 has 1, row 2 has 2, etc. (e.g. count=10 → rows 1,2,3,4). **`direction`** (optional) — Which way the triangle points (apex): `up` (default), `down`, `left`, `right`. Template: "triangular array pointing up/down/left/right".
+- **Drawing mesh (rectangular and triangular only):** When present, the renderer may draw centre-to-centre mesh lines. **`draw_mesh`** (optional, boolean) — If true, draw the mesh (lines between cell centres). **`mesh_line_type`** (optional) — Line type key from the vocabulary (`solid`, `dashed`, `dotted`, `bold`); default `solid`. **`draw_full_grid`** (optional, boolean) — If true, draw all mesh segments. If false, draw only segments between adjacent **non-null** cells: the renderer must **not** draw any mesh line that touches a null position (so e.g. a right-angled triangular layout—rectangular array with nulls—shows mesh only for the triangle). **`mesh_omit`** (optional) — List of mesh segments to omit. For rectangular arrays: use cell-pair notation (e.g. `0-1` = segment between cell index 0 and 1 in row-major order) or line identifiers (e.g. `v0 h1` = first vertical line, second horizontal line; vertical lines run between columns, horizontal between rows). For triangular arrays: use the renderer’s segment indexing (e.g. segment indices or cell-pairs). Space- or comma-separated.
+- **Drawing path (loop only):** When present, the renderer may draw the path (container) shape. **`draw_path`** (optional, boolean) — If true, draw the path outline (circle or polygon). **`path_line_type`** (optional) — Line type key; default `solid`. **`path_omit_edges`** (optional) — For polygon paths only: space-separated edge indices (0-based) to omit (e.g. `0 2` omits first and third edge). Ignored for circle.
 - **Children:** Either:
   - **One** `repeated` element containing a single `shape` (with `key`, optional `line_type`, `shading` only) — That shape is repeated for every position in the array (uniform array of shapes), or
-  - **N** elements (N = array size: rows×cols, or count for orbital/triangular), each being a `shape`, `stack`, or `array` — One element per position (e.g. "array of two stacks" = 2 elements, each a `stack`). Order = row-major for rectangular; by angle for orbital; by row for triangular.
+  - **N** elements (N = array size: rows×cols; for loop: count or vertices or edges×per_edge; for triangular: count), each being a `shape`, `stack`, `array`, or **`null`** — One element per position. A **`null`** element means nothing is drawn in that position (the slot is empty). Order = row-major for rectangular; for loop: by angle along path (circle) or by vertex then by edge (polygon); by row for triangular.
 
-**Semantics:** Layout type **array**. A layout that arranges multiple elements in a regular arrangement; no overlap. Elements may be shapes or nested layouts. See design doc Layout (3.2) layout type: array.
+**Null element:** In the explicit list of N elements, use **`null`** (empty element: `<null/>`) for any position where nothing should be drawn. The slot is reserved but empty. When **`draw_full_grid`** is false, mesh lines are never drawn to or from null positions (mesh shows only the non-null region; e.g. right-angled triangular array shows a triangular mesh). Not used with **`repeated`** (repeated implies every position has the same shape).
+
+**Semantics:** Layout type **array**. A layout that arranges multiple elements in a regular arrangement; no overlap. Elements may be shapes, nested layouts, or null (empty slot). For **loop**, the path is given by `path_shape` (default circle); use `positions` (vertices | edges) and, for edges, `per_edge` to place elements on the path. See design doc Layout (3.2) layout type: array.
 
 ---
 
@@ -214,7 +220,7 @@ Placement constraints tell the renderer **how** to place content without giving 
 
 ## 12. Vocabulary key reference
 
-Valid keys for attributes (`key`, `line_type`, `shading`, `motif_key`, etc.) are those defined in **QUESTION-GENERATION-DESIGN.md** §4:
+Valid keys for attributes (`key`, `line_type`, `shading`, etc.) are those defined in **QUESTION-GENERATION-DESIGN.md** §4:
 
 - **Shape containers:** §4 Shape containers (3.3) — regular shapes, common irregular shapes, symbols (circle, triangle, square, pentagon, hexagon, heptagon, octagon, right_angled_triangle, rectangle, semicircle, cross, arrow, plus, times, club, heart, diamond, spade, star).
 - **Motifs:** §4 Motif dictionary (3.4) — circle, plus, times, heart, diamond, club, spade, square, triangle, star.
@@ -234,7 +240,7 @@ The file **question-xml.xsd** in this directory defines the schema. It allows **
 
 ## 14. Sample question XML
 
-The following example describes one odd-one-out question: five options, each a single shape (default layout) with layout type chaotic (motifs inside). Option 2 (index 2) is correct.
+The following example describes one odd-one-out question: five options, each a single shape (default layout) with layout type scatter (child shapes placed randomly inside). Option 2 (index 2) is correct.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -246,35 +252,61 @@ The following example describes one odd-one-out question: five options, each a s
     <option index="0">
       <diagram>
         <shape key="square" line_type="solid" shading="white">
-          <chaotic motif_key="circle" count="4"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
     <option index="1">
       <diagram>
         <shape key="circle" line_type="dashed" shading="grey_light">
-          <chaotic motif_key="circle" count="4"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
     <option index="2">
       <diagram>
         <shape key="triangle" line_type="solid" shading="white">
-          <chaotic motif_key="circle" count="5"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
     <option index="3">
       <diagram>
         <shape key="hexagon" line_type="solid" shading="white">
-          <chaotic motif_key="circle" count="4"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
     <option index="4">
       <diagram>
         <shape key="pentagon" line_type="dotted" shading="grey_light">
-          <chaotic motif_key="circle" count="4"/>
+          <scatter>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+            <shape key="circle"/>
+          </scatter>
         </shape>
       </diagram>
     </option>
@@ -418,16 +450,30 @@ The following example describes one odd-one-out question: five options, each a s
 ```
 
 ```xml
-<!-- Orbital array: 6 shapes on a circle -->
+<!-- Loop array: 6 shapes on a circle (default path) -->
 <option index="0">
   <diagram>
-    <array type="orbital" count="6">
+    <array type="loop" count="6">
       <repeated>
         <shape key="pentagon" line_type="solid" shading="white"/>
       </repeated>
     </array>
   </diagram>
 </option>
+```
+
+```xml
+<!-- Loop on square: 4 shapes at vertices -->
+<array type="loop" path_shape="square" positions="vertices">
+  <repeated><shape key="circle" shading="white"/></repeated>
+</array>
+```
+
+```xml
+<!-- Loop on square: 2 shapes per edge (8 total) -->
+<array type="loop" path_shape="square" positions="edges" per_edge="2">
+  <repeated><shape key="triangle" shading="grey"/></repeated>
+</array>
 ```
 
 ```xml

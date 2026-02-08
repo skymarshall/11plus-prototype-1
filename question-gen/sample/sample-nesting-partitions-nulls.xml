@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Complex nesting: arrays/stacks with partitioned shapes and null slots.
+     Render: python lib/nvr_draw_layout.py sample/sample-nesting-partitions-nulls.xml -o output (optional: prefix nest) -->
+<diagrams xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../question-xml.xsd">
+
+  <!-- 1. 2×2 array: partitioned shapes + one null -->
+  <diagram id="array-2x2-partitioned-and-null">
+    <array type="rectangular" rows="2" cols="2">
+      <shape key="square" line_type="solid" shading="white">
+        <partition type="horizontal">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <null/>
+      <shape key="circle" line_type="solid" shading="white">
+        <partition type="vertical">
+          <section low="0" high="50" shading="grey_light"/>
+          <section low="50" high="100" shading="white"/>
+        </partition>
+      </shape>
+      <shape key="triangle" line_type="solid" shading="white">
+        <partition type="diagonal_slash">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+    </array>
+  </diagram>
+
+  <!-- 2. 3×3 array: mixed partitioned shapes, two nulls -->
+  <diagram id="array-3x3-partitioned-nulls">
+    <array type="rectangular" rows="3" cols="3">
+      <shape key="square" shading="white">
+        <partition type="horizontal">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <shape key="circle" shading="white">
+        <partition type="vertical">
+          <section low="0" high="50" shading="grey"/>
+          <section low="50" high="100" shading="white"/>
+        </partition>
+      </shape>
+      <null/>
+      <shape key="triangle" shading="white">
+        <partition type="diagonal_slash">
+          <section low="0" high="50" shading="grey_light"/>
+          <section low="50" high="100" shading="white"/>
+        </partition>
+      </shape>
+      <shape key="pentagon" shading="white">
+        <partition type="diagonal_backslash">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <shape key="hexagon" shading="grey"/>
+      <null/>
+      <shape key="square" shading="white">
+        <partition type="vertical">
+          <section low="0" high="33.33" shading="white"/>
+          <section low="33.33" high="66.67" shading="grey"/>
+          <section low="66.67" high="100" shading="grey_light"/>
+        </partition>
+      </shape>
+      <shape key="circle" shading="solid_black"/>
+    </array>
+  </diagram>
+
+  <!-- 3. 1×3 array: stack, null, stack; stacks contain partitioned shapes -->
+  <diagram id="array-1x3-stacks-null-stacks">
+    <array type="rectangular" rows="1" cols="3">
+      <stack direction="up">
+        <shape key="square" shading="grey"/>
+        <shape key="circle" shading="white">
+          <partition type="horizontal">
+            <section low="0" high="50" shading="white"/>
+            <section low="50" high="100" shading="grey"/>
+          </partition>
+        </shape>
+      </stack>
+      <null/>
+      <stack direction="up">
+        <shape key="triangle" shading="white">
+          <partition type="vertical">
+            <section low="0" high="50" shading="grey_light"/>
+            <section low="50" high="100" shading="white"/>
+          </partition>
+        </shape>
+        <shape key="pentagon" shading="grey"/>
+      </stack>
+    </array>
+  </diagram>
+
+  <!-- 4. 2×2 array of stacks: one cell null; some shapes partitioned -->
+  <diagram id="array-2x2-stacks-one-null">
+    <array type="rectangular" rows="2" cols="2">
+      <stack direction="up">
+        <shape key="circle" shading="white">
+          <partition type="horizontal">
+            <section low="0" high="50" shading="white"/>
+            <section low="50" high="100" shading="grey"/>
+          </partition>
+        </shape>
+        <shape key="square" shading="grey"/>
+      </stack>
+      <stack direction="up">
+        <shape key="triangle" shading="grey_light"/>
+        <shape key="hexagon" shading="white">
+          <partition type="diagonal_slash">
+            <section low="0" high="50" shading="white"/>
+            <section low="50" high="100" shading="grey"/>
+          </partition>
+        </shape>
+      </stack>
+      <null/>
+      <stack direction="up">
+        <shape key="pentagon" shading="white"/>
+        <shape key="circle" shading="solid_black"/>
+      </stack>
+    </array>
+  </diagram>
+
+  <!-- 5. Right-angled 3×3 (bottom_left): partitioned shapes in triangle, nulls outside -->
+  <diagram id="right-angled-partitioned-nulls">
+    <array type="rectangular" rows="3" cols="3" right_angle_corner="bottom_left" draw_mesh="true" draw_full_grid="false">
+      <shape key="square" shading="white">
+        <partition type="horizontal">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <null/>
+      <null/>
+      <shape key="circle" shading="white">
+        <partition type="vertical">
+          <section low="0" high="50" shading="grey"/>
+          <section low="50" high="100" shading="white"/>
+        </partition>
+      </shape>
+      <shape key="triangle" shading="grey_light">
+        <partition type="diagonal_slash">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <null/>
+      <shape key="pentagon" shading="white"/>
+      <shape key="hexagon" shading="grey"/>
+      <shape key="circle" shading="solid_black"/>
+    </array>
+  </diagram>
+
+  <!-- 6. Loop (square, 4 vertices): one null, three partitioned shapes -->
+  <diagram id="loop-square-partitioned-one-null">
+    <array type="loop" path_shape="square" positions="vertices" draw_path="true">
+      <shape key="circle" shading="white">
+        <partition type="horizontal">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <shape key="square" shading="white">
+        <partition type="vertical">
+          <section low="0" high="50" shading="grey_light"/>
+          <section low="50" high="100" shading="white"/>
+        </partition>
+      </shape>
+      <null/>
+      <shape key="triangle" shading="white">
+        <partition type="diagonal_slash">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+    </array>
+  </diagram>
+
+  <!-- 7. 3×3 with mesh: partitioned + nulls (L-shaped pattern) -->
+  <diagram id="array-3x3-mesh-partitioned-nulls">
+    <array type="rectangular" rows="3" cols="3" draw_mesh="true" draw_full_grid="false">
+      <shape key="square" shading="white">
+        <partition type="horizontal">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <shape key="circle" shading="white">
+        <partition type="vertical">
+          <section low="0" high="50" shading="grey"/>
+          <section low="50" high="100" shading="white"/>
+        </partition>
+      </shape>
+      <null/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="pentagon" shading="white">
+        <partition type="diagonal_backslash">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <null/>
+      <null/>
+      <null/>
+      <shape key="hexagon" shading="white">
+        <partition type="horizontal">
+          <section low="0" high="33.33" shading="white"/>
+          <section low="33.33" high="66.67" shading="grey"/>
+          <section low="66.67" high="100" shading="grey_light"/>
+        </partition>
+      </shape>
+    </array>
+  </diagram>
+
+  <!-- 8. Loop of 6: two nulls, four partitioned/varied shapes -->
+  <diagram id="loop-six-partitioned-two-nulls">
+    <array type="loop" count="6" draw_path="true">
+      <shape key="circle" shading="white">
+        <partition type="horizontal">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+      <shape key="square" shading="grey"/>
+      <null/>
+      <shape key="triangle" shading="white">
+        <partition type="vertical">
+          <section low="0" high="50" shading="grey_light"/>
+          <section low="50" high="100" shading="white"/>
+        </partition>
+      </shape>
+      <null/>
+      <shape key="hexagon" shading="white">
+        <partition type="diagonal_slash">
+          <section low="0" high="50" shading="white"/>
+          <section low="50" high="100" shading="grey"/>
+        </partition>
+      </shape>
+    </array>
+  </diagram>
+</diagrams>

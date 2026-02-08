@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
 echo Generating partitioned sample SVGs...
-python xml_to_svg.py sample\sample-partitioned-extensive.xml -o output
+python lib\nvr_draw_diagram.py sample\sample-partitioned-extensive.xml -o output
 if errorlevel 1 (
   echo Failed.
   pause

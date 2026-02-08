@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EXAMPLES (render with: python nvr_render_diagrams.py sample/sample-stack-array.xml -o output)
+
+  Stacks:
+    stack-three                  — 3 shapes stacked (medium spacing, up, step right)
+    stack-line-fills             — hatch/diagonal line shadings
+    stack-vertical-lines-*       — vertical lines white/grey
+    stack-solids-and-hatch       — solid + hatch mix
+    stack-four-mixed             — 4 shapes, varied shading
+    stack-dashed-hatch           — dashed outline + hatch
+    two-stacks-four-shapes-*     — two stacks of 4 shapes (solid/bold variety)
+
+  Rectangular arrays:
+    array-2x2                    — 2×2 repeated triangles
+    array-2x2-draw-mesh          — 2×2 with centre-to-centre mesh
+    array-2x2-with-nulls        — 2×2 with null slots (circle top-left, square bottom-right)
+    array-2x2-with-nulls-draw-mesh       — same + draw_mesh, draw_full_grid=true (full grid)
+    array-2x2-with-nulls-draw-mesh-no-full — same + draw_mesh, draw_full_grid=false (no lines)
+    array-2x2-adjacent-shapes-mesh-no-full  — 2×2 two shapes in row 0, draw_mesh, draw_full_grid=false (one segment)
+    array-2x2-mesh-omit-one-edge           — 2×2 full grid, draw_mesh_omit="0-1" (omit line between two non-null cells)
+    right-angled-array-10                   — size-10 right-angled triangular (4×4, bottom-left), mesh only between triangle cells (draw_full_grid=false), 10 black shapes + nulls
+    array-horizontal-three-*     — 1×3 row of squares
+
+  Loop arrays:
+    array-loop-6                 — 6 pentagons on circle
+    loop-4-hexagons              — 4 hexagons on circle, draw_path=true
+    loop-square-4-shapes-black   — square path, 4 shapes (circle/square/triangle/pentagon), solid_black
+    loop-octagon-16-circles-*    — octagon path, 16 circles at vertices+edges, varied solid shading
+
+  Triangular arrays:
+    array-triangular-6           — 6 circles, apex up (default)
+    array-triangular-6-down     — apex down
+    array-triangular-6-left     — apex left
+    array-triangular-6-right    — apex right
+    array-triangular-6-draw-mesh — triangular mesh (centre-to-centre)
+
+  Nested / mixed:
+    array-two-stacks             — 1×2 array of two stacks
+    array-three-stacks          — 1×3 array of three stacks
+    loop-6-of-2x2-black         — 6 loop positions, each a 2×2 array (solid_black)
+-->
+<diagrams>
+  <diagram id="stack-three">
+    <stack spacing="medium" direction="up" step="right">
+      <shape key="square" shading="grey"/>
+      <shape key="circle" shading="white"/>
+      <shape key="triangle" shading="grey_light"/>
+    </stack>
+  </diagram>
+  <diagram id="array-2x2">
+    <array type="rectangular" rows="2" cols="2">
+      <repeated>
+        <shape key="triangle" line_type="solid" shading="white"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="array-2x2-draw-mesh">
+    <array type="rectangular" rows="2" cols="2" draw_mesh="true">
+      <repeated>
+        <shape key="square" line_type="solid" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="array-loop-6">
+    <array type="loop" count="6">
+      <repeated>
+        <shape key="pentagon" line_type="solid" shading="white"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="loop-4-hexagons">
+    <array type="loop" count="4" draw_path="true">
+      <repeated>
+        <shape key="hexagon" line_type="solid" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="loop-square-4-shapes-black">
+    <array type="loop" count="4" path_shape="square" draw_path="true">
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <shape key="square" line_type="solid" shading="solid_black"/>
+      <shape key="triangle" line_type="solid" shading="solid_black"/>
+      <shape key="pentagon" line_type="solid" shading="solid_black"/>
+    </array>
+  </diagram>
+  <diagram id="loop-octagon-16-circles-varied">
+    <array type="loop" count="16" path_shape="octagon" draw_path="true">
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <shape key="circle" line_type="solid" shading="grey"/>
+      <shape key="circle" line_type="solid" shading="white"/>
+      <shape key="circle" line_type="solid" shading="grey_light"/>
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <shape key="circle" line_type="solid" shading="grey"/>
+      <shape key="circle" line_type="solid" shading="white"/>
+      <shape key="circle" line_type="solid" shading="grey_light"/>
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <shape key="circle" line_type="solid" shading="grey"/>
+      <shape key="circle" line_type="solid" shading="white"/>
+      <shape key="circle" line_type="solid" shading="grey_light"/>
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <shape key="circle" line_type="solid" shading="grey"/>
+      <shape key="circle" line_type="solid" shading="white"/>
+      <shape key="circle" line_type="solid" shading="grey_light"/>
+    </array>
+  </diagram>
+  <diagram id="array-2x2-with-nulls">
+    <array type="rectangular" rows="2" cols="2">
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <null/>
+      <null/>
+      <shape key="square" line_type="solid" shading="grey"/>
+    </array>
+  </diagram>
+  <diagram id="array-2x2-with-nulls-draw-mesh">
+    <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <null/>
+      <null/>
+      <shape key="square" line_type="solid" shading="grey"/>
+    </array>
+  </diagram>
+  <diagram id="array-2x2-with-nulls-draw-mesh-no-full">
+    <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="false">
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <null/>
+      <null/>
+      <shape key="square" line_type="solid" shading="grey"/>
+    </array>
+  </diagram>
+  <diagram id="array-2x2-adjacent-shapes-mesh-no-full">
+    <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="false">
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <shape key="square" line_type="solid" shading="grey"/>
+      <null/>
+      <null/>
+    </array>
+  </diagram>
+  <!-- Full 2×2 grid, but omit the mesh line between positions 0 and 1 (top row, between first and second cell) -->
+  <diagram id="array-2x2-mesh-omit-one-edge">
+    <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_mesh_omit="0-1">
+      <repeated>
+        <shape key="circle" line_type="solid" shading="solid_black"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="right-angled-array-10">
+    <array type="rectangular" rows="4" cols="4" draw_mesh="true" draw_full_grid="false">
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+      <null/>
+      <null/>
+      <null/>
+      <shape key="square" line_type="solid" shading="solid_black"/>
+      <shape key="triangle" line_type="solid" shading="solid_black"/>
+      <null/>
+      <null/>
+      <shape key="pentagon" line_type="solid" shading="solid_black"/>
+      <shape key="hexagon" line_type="solid" shading="solid_black"/>
+      <shape key="diamond" line_type="solid" shading="solid_black"/>
+      <null/>
+      <shape key="star" line_type="solid" shading="solid_black"/>
+      <shape key="heart" line_type="solid" shading="solid_black"/>
+      <shape key="cross" line_type="solid" shading="solid_black"/>
+      <shape key="plus" line_type="solid" shading="solid_black"/>
+    </array>
+  </diagram>
+  <diagram id="array-triangular-6">
+    <array type="triangular" count="6">
+      <repeated>
+        <shape key="circle" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="array-triangular-6-down">
+    <array type="triangular" count="6" direction="down">
+      <repeated>
+        <shape key="circle" line_type="solid" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="array-triangular-6-left">
+    <array type="triangular" count="6" direction="left">
+      <repeated>
+        <shape key="circle" line_type="solid" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="array-triangular-6-right">
+    <array type="triangular" count="6" direction="right">
+      <repeated>
+        <shape key="circle" line_type="solid" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="array-triangular-6-draw-mesh">
+    <array type="triangular" count="6" draw_mesh="true">
+      <repeated>
+        <shape key="circle" line_type="solid" shading="solid_black"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="array-horizontal-three-squares">
+    <array type="rectangular" rows="1" cols="3">
+      <repeated>
+        <shape key="square" line_type="solid" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+  <diagram id="array-two-stacks">
+    <array type="rectangular" rows="1" cols="2">
+      <stack spacing="medium" direction="up" step="right">
+        <shape key="square" shading="grey"/>
+        <shape key="circle" shading="white"/>
+      </stack>
+      <stack spacing="medium" direction="up" step="right">
+        <shape key="triangle" shading="grey_light"/>
+        <shape key="pentagon" shading="white"/>
+      </stack>
+    </array>
+  </diagram>
+  <diagram id="array-three-stacks">
+    <array type="rectangular" rows="1" cols="3">
+      <stack spacing="medium" direction="up" step="right">
+        <shape key="circle" shading="grey"/>
+        <shape key="square" shading="white"/>
+      </stack>
+      <stack spacing="medium" direction="up" step="right">
+        <shape key="triangle" shading="grey_light"/>
+        <shape key="hexagon" shading="white"/>
+      </stack>
+      <stack spacing="medium" direction="up" step="right">
+        <shape key="pentagon" shading="grey"/>
+        <shape key="diamond" shading="white"/>
+      </stack>
+    </array>
+  </diagram>
+  <diagram id="stack-line-fills">
+    <stack spacing="medium" direction="up" step="right">
+      <shape key="square" line_type="solid" shading="diagonal_slash"/>
+      <shape key="circle" line_type="solid" shading="diagonal_backslash"/>
+      <shape key="triangle" line_type="solid" shading="horizontal_lines"/>
+      <shape key="pentagon" line_type="solid" shading="vertical_lines"/>
+    </stack>
+  </diagram>
+  <diagram id="stack-vertical-lines-white-grey">
+    <stack spacing="medium" direction="up" step="right">
+      <shape key="square" line_type="solid" shading="white"/>
+      <shape key="circle" line_type="solid" shading="grey"/>
+      <shape key="pentagon" line_type="solid" shading="vertical_lines"/>
+    </stack>
+  </diagram>
+  <diagram id="stack-solids-and-hatch">
+    <stack spacing="medium" direction="up" step="right">
+      <shape key="square" line_type="solid" shading="solid_black"/>
+      <shape key="circle" line_type="solid" shading="grey_light"/>
+      <shape key="triangle" line_type="solid" shading="diagonal_slash"/>
+      <shape key="pentagon" line_type="solid" shading="diagonal_backslash"/>
+    </stack>
+  </diagram>
+  <diagram id="stack-four-mixed">
+    <stack spacing="medium" direction="up" step="right">
+      <shape key="circle" line_type="solid" shading="horizontal_lines"/>
+      <shape key="square" line_type="solid" shading="vertical_lines"/>
+      <shape key="triangle" line_type="solid" shading="diagonal_slash"/>
+      <shape key="pentagon" line_type="solid" shading="diagonal_backslash"/>
+    </stack>
+  </diagram>
+  <diagram id="stack-dashed-hatch">
+    <stack spacing="medium" direction="up" step="right">
+      <shape key="square" line_type="dashed" shading="grey"/>
+      <shape key="circle" line_type="dotted" shading="white"/>
+      <shape key="triangle" line_type="solid" shading="diagonal_backslash"/>
+    </stack>
+  </diagram>
+  <diagram id="two-stacks-four-shapes-solid-bold">
+    <array type="rectangular" rows="1" cols="2">
+      <stack spacing="medium" direction="up" step="right">
+        <shape key="circle" line_type="bold" shading="solid_black"/>
+        <shape key="square" line_type="solid" shading="grey"/>
+        <shape key="triangle" line_type="bold" shading="grey_light"/>
+        <shape key="pentagon" line_type="solid" shading="white"/>
+      </stack>
+      <stack spacing="medium" direction="up" step="right">
+        <shape key="diamond" line_type="solid" shading="solid_black"/>
+        <shape key="heart" line_type="bold" shading="white"/>
+        <shape key="star" line_type="solid" shading="grey_light"/>
+        <shape key="cross" line_type="bold" shading="grey"/>
+      </stack>
+    </array>
+  </diagram>
+  <diagram id="loop-6-of-2x2-black">
+    <array type="loop" count="6">
+      <array type="rectangular" rows="2" cols="2">
+        <repeated>
+          <shape key="circle" line_type="solid" shading="solid_black"/>
+        </repeated>
+      </array>
+      <array type="rectangular" rows="2" cols="2">
+        <repeated>
+          <shape key="square" line_type="solid" shading="solid_black"/>
+        </repeated>
+      </array>
+      <array type="rectangular" rows="2" cols="2">
+        <repeated>
+          <shape key="triangle" line_type="solid" shading="solid_black"/>
+        </repeated>
+      </array>
+      <array type="rectangular" rows="2" cols="2">
+        <repeated>
+          <shape key="pentagon" line_type="solid" shading="solid_black"/>
+        </repeated>
+      </array>
+      <array type="rectangular" rows="2" cols="2">
+        <repeated>
+          <shape key="hexagon" line_type="solid" shading="solid_black"/>
+        </repeated>
+      </array>
+      <array type="rectangular" rows="2" cols="2">
+        <repeated>
+          <shape key="diamond" line_type="solid" shading="solid_black"/>
+        </repeated>
+      </array>
+    </array>
+  </diagram>
+</diagrams>

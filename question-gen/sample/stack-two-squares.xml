@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<diagrams>
+  <diagram id="stack-two-squares">
+    <stack direction="up">
+      <shape key="square" line_type="solid" shading="white"/>
+      <shape key="square" line_type="solid" shading="solid_black"/>
+    </stack>
+  </diagram>
+</diagrams>

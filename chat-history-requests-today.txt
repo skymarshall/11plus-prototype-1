@@ -1,0 +1,59 @@
+# Chat history – your requests only (reconstructed from this conversation)
+# Use this after reverting from git to re-apply or re-request work.
+
+=== FROM CONVERSATION SUMMARY (earlier in the session) ===
+
+1. Standard motif sizing – Add small/medium/large motif sizes (default medium) and rules to "tag shapes as motif" in the XML.
+
+2. Cursor memory – Tips for reducing Cursor memory use; add a `.cursorignore` and a `CURSOR-CONTEXT.md` describing exclusions.
+
+3. .cursorignore access – Why the AI can't edit `.cursorignore` (by design: the AI must not change what it can see).
+
+4. Binaries for .cursorignore – Add things like `*.lockb`, `coverage/`, and optionally `package-lock.json` / `*.sql`.
+
+5. Doc for exclusions – Add a doc the AI can read that describes "holes" in context (created `CURSOR-CONTEXT.md`).
+
+6. Scatter rework – Make scatter like a 1D array: all positions logically equivalent; support repeated or explicit children (including nested layouts and "no scatter inside scatter" then later allow scatter-in-scatter in a bounding box).
+
+7. No motif special-casing outside §3.4 – Motif is "just a shape with special scaling and restrictions"; remove motif-specific wording from the rest of the spec.
+
+8. Scatter of 6 circles – Confirm it's valid and how scaling works (motif scale, default medium; only numeric scale in nvr-symbol-svg-design.md is 1/8 = 12.5 in 100×100).
+
+9. Scatter of 6 circle shapes – Same as "6 circles"; no extra behavior.
+
+10. Scatter at 1/3 scale (non-motif) – Clarify that "at 1/3 scale" isn't in the spec; would need an explicit scale attribute to avoid motif scaling.
+
+11. Non-motif scatter + consistent scaling – Allow templates to request scatter of non-motif shapes with "intelligent" scaling and a question-level mechanism so scaling is consistent across all diagrams in a question (design doc updated: explicit/derived scale, question-level scale(s)).
+
+12. Scatter of nested layouts – Allow scatter to contain array/stack (and later scatter), with "scatter in bounding box" and example "scatter of 4 scatters of 4 squares."
+
+13. Scatter of 3 diamonds and 2 squares – Confirm valid (explicit list, mixed shapes).
+
+14. Default motif scaling by nesting – Top-level motif/layout → default medium; lower nesting → default small (design doc updated; duplicate "Tagging" sentence in design doc was left due to replace failures).
+
+15. Add scatter support to layout py – Implement scatter in code: container helper, layout scatter API, single_shape shape+scatter, render_diagrams treating shape+scatter as renderable.
+
+16. Sample: scatter of 6 varied regular shapes – Add sample and XSD so scatter can have explicit children (shape/stack/array/null); created `sample-scatter-varied.xml` and updated `ScatterType` (later undone by user).
+
+17. Undo – User undid intending one step; multiple steps were reverted (including the three renderer files and possibly the sample/XSD).
+
+18. Are scatters implemented? – No: only container and spec/samples remain; `nvr_draw_single_shape.py`, `nvr_draw_layout_svg.py`, and `nvr_render_diagrams.py` were missing.
+
+19. Where was the code added? – All in the single "add support for scatters to the layout py" step: container `get_shape_placement_bounds_and_check`, layout `get_scatter_positions_and_motif`, single_shape shape+scatter handling, render_diagrams "shape+scatter renderable."
+
+20. Restore what you can – Recreate the scatter implementation from the conversation.
+
+
+=== FROM THIS CHAT THREAD ===
+
+21. try to restore what you can based on the conversation
+
+22. ok, undo the last change - that was a mess
+
+23. ok, it looks as though I lost a lot of work by pressing the undo button in cursor a few steps back in the conversation
+
+24. ok, it looks like I lost a lot of work by pressing undo after I asked "are scatters currently implemented" above in the conversation. I can't tell how much was undone. How much do you think was undone and is there any way to recover it? I do not have any git checkins today
+
+25. we seem to be missing the xsd and main design file question_generation_design - any recommendations on how to recover a prev version from earlier today?
+
+26. ok, can you dump my whole chat history from today to a text file (my requests only) ? I will revert to a previous version of everything from git and try to recover myself

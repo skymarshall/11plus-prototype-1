@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Sample diagrams: one per layout type (no nesting). Variety of simple shapes and fills. -->
+<diagrams xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../question-xml.xsd">
+  <!-- 1. Scatter: five shapes, variety of keys and fills, placed randomly -->
+  <diagram id="scatter-five">
+    <scatter>
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="solid_black"/>
+      <shape key="pentagon" shading="grey_light"/>
+      <shape key="hexagon" shading="diagonal_slash"/>
+    </scatter>
+  </diagram>
+  <!-- 2. Stack: two squares, different solid fills -->
+  <diagram id="stack-two-squares">
+    <stack direction="up">
+      <shape key="square" line_type="solid" shading="white"/>
+      <shape key="square" line_type="solid" shading="solid_black"/>
+    </stack>
+  </diagram>
+  <!-- 3. Stack: three shapes bottom to top -->
+  <diagram id="stack-three">
+    <stack direction="up">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="solid_black"/>
+    </stack>
+  </diagram>
+  <!-- 4. Stack: four shapes bottom to top -->
+  <diagram id="stack-four">
+    <stack spacing="medium" direction="up" step="right">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="hexagon" shading="white"/>
+    </stack>
+  </diagram>
+  <!-- 5. Stack: four circles, different solid fills -->
+  <diagram id="stack-four-circles">
+    <stack direction="up">
+      <shape key="circle" line_type="solid" shading="white"/>
+      <shape key="circle" line_type="solid" shading="grey_light"/>
+      <shape key="circle" line_type="solid" shading="grey"/>
+      <shape key="circle" line_type="solid" shading="solid_black"/>
+    </stack>
+  </diagram>
+  <!-- 6. Array rectangular 2×2: four different shapes -->
+  <diagram id="array-rect-2x2">
+    <array type="rectangular" rows="2" cols="2">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="hexagon" shading="white"/>
+    </array>
+  </diagram>
+  <!-- 7. Array rectangular 1×2: two shapes side by side -->
+  <diagram id="array-1x2">
+    <array type="rectangular" rows="1" cols="2">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+    </array>
+  </diagram>
+  <!-- 8. Array rectangular 2×2 repeated: uniform triangles -->
+  <diagram id="array-rect-repeated">
+    <array type="rectangular" rows="2" cols="2">
+      <repeated>
+        <shape key="triangle" shading="grey"/>
+      </repeated>
+    </array>
+  </diagram>
+  <!-- 9. Array loop: six shapes on a circle -->
+  <diagram id="array-loop-six">
+    <array type="loop" count="6" draw_path="true">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="solid_black"/>
+      <shape key="pentagon" shading="grey_light"/>
+      <shape key="hexagon" shading="white"/>
+      <shape key="circle" shading="grey"/>
+    </array>
+  </diagram>
+  <!-- 10. Array triangular: six elements, pointing up -->
+  <diagram id="array-triangular">
+    <array type="triangular" count="6" direction="up">
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="grey_light"/>
+      <shape key="pentagon" shading="white"/>
+      <shape key="hexagon" shading="grey"/>
+      <shape key="circle" shading="solid_black"/>
+    </array>
+  </diagram>
+  <!-- 11. Nested: two stacks of 3 shapes (1×2 array of stacks) -->
+  <diagram id="array-two-stacks-of-three">
+    <array type="rectangular" rows="1" cols="2">
+      <stack direction="up">
+        <shape key="square" shading="white"/>
+        <shape key="circle" shading="grey"/>
+        <shape key="triangle" shading="solid_black"/>
+      </stack>
+      <stack direction="up">
+        <shape key="circle" shading="grey_light"/>
+        <shape key="square" shading="grey"/>
+        <shape key="hexagon" shading="white"/>
+      </stack>
+    </array>
+  </diagram>
+  <!-- 12. Nested: 6-loop of 2×2 arrays of solid_black shapes (circle, square, triangle, hexagon) -->
+  <diagram id="loop-six-2x2-black">
+    <array type="loop" count="6" draw_path="true">
+      <repeated>
+        <array type="rectangular" rows="2" cols="2">
+          <shape key="circle" shading="solid_black"/>
+          <shape key="square" shading="solid_black"/>
+          <shape key="triangle" shading="solid_black"/>
+          <shape key="hexagon" shading="solid_black"/>
+        </array>
+      </repeated>
+    </array>
+  </diagram>
+</diagrams>
