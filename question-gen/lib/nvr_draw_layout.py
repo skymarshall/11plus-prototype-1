@@ -47,7 +47,18 @@ def _array_scale_max_no_overlap(rows: int, cols: int) -> float:
     return min(w, h) / 100.0
 
 
-MIN_CENTRE_TO_CENTRE = 14.0   # scatter: no overlap
+# Motif standardized sizes (design doc §3.4.1): viewBox cell size → scale = cell/100
+MOTIF_SCALE_SMALL = 0.075   # ~7.5 units
+MOTIF_SCALE_MEDIUM = 0.125  # ~12.5 units
+MOTIF_SCALE_LARGE = 0.175   # ~17.5 units
+
+MIN_CENTRE_TO_CENTRE = 16.0   # scatter: fallback min centre-to-centre
+# Non-motif scatter scale: design doc "generous, no overlap" — scale(n) = SAFETY / (1 + √n), min_dist = 100×scale, margin = 50×scale + ε
+SCATTER_SCALE_SAFETY = 0.99  # safety factor for random placement and floating point
+# Margin from shape boundary when placing scatter inside a shape (so placed shapes do not overlap the outline)
+SCATTER_INSIDE_SHAPE_MARGIN = 10.0
+# Scale factor for scatter inside a shape: use scale * this so placement has room (avoids render failure in tight regions)
+SCATTER_INSIDE_SHAPE_SCALE_FACTOR = 0.55
 STACK_OFFSET = 0.52           # fraction of element size for overlap (higher = tighter stack, allows larger scale)
 STACK_STEP_CROSS = 0.2       # cross-axis step per item (fraction of size); smaller = less fan-out
 
@@ -167,6 +178,43 @@ def _shape_to_svg_fragment(
         return "\n".join(parts)
     # fallback
     return "\n".join(wrap([path_line("none")]))
+
+
+def _placement_scale(el: ET.Element, layout_scale: float) -> float:
+    """Return scale for placing this element: motif_scale (small/medium/large) if set on a shape, else layout_scale."""
+    if el.tag != "shape":
+        return layout_scale
+    motif_scale_attr = (el.get("motif_scale") or "").strip().lower()
+    if motif_scale_attr == "small":
+        return MOTIF_SCALE_SMALL
+    if motif_scale_attr == "medium":
+        return MOTIF_SCALE_MEDIUM
+    if motif_scale_attr == "large":
+        return MOTIF_SCALE_LARGE
+    return layout_scale
+
+
+def _has_motif_scale(shape_el: ET.Element) -> bool:
+    """True if this shape has motif_scale set (small/medium/large)."""
+    if shape_el.tag != "shape":
+        return False
+    v = (shape_el.get("motif_scale") or "").strip().lower()
+    return v in ("small", "medium", "large")
+
+
+def _scatter_scale_for_count(n: int) -> float:
+    """Scale for non-motif scatter with n elements. Design doc: scale(n) = 0.99/(1+√n), generous, no overlap."""
+    n = max(1, n)
+    return SCATTER_SCALE_SAFETY / (1.0 + math.sqrt(n))
+
+
+def _scatter_effective_count(scatter_el: ET.Element, actual_count: int) -> int:
+    """Count used for scale: scale_as_count if set (uniform scaling across diagrams), else actual_count.
+    Spec: scale_as_count must be >= actual count; we clamp so effective_count >= actual_count to avoid placement failure."""
+    raw = scatter_el.get("scale_as_count")
+    if raw is None or raw.strip() == "":
+        return actual_count
+    return max(actual_count, 1, int(raw))
 
 
 def _place_fragment(fragment: str, cx: float, cy: float, scale: float) -> str:
@@ -602,22 +650,201 @@ def _array_positions_triangular(count: int, direction: str = "up") -> list[tuple
     return positions
 
 
-def render_scatter(scatter_el: ET.Element, motifs_dir: Path, seed: int | None = None) -> str:
-    """Render scatter layout (no nesting): children placed randomly."""
+def _scatter_shape_children(scatter_el: ET.Element) -> list[ET.Element]:
+    """Return list of shape elements for scatter: either from repeated (count times) or explicit children."""
+    repeated = scatter_el.find("repeated")
+    if repeated is not None:
+        repeated_el = repeated.find("shape")
+        if repeated_el is None or _has_nested_layout(repeated_el):
+            raise ValueError("Scatter repeated must contain a single shape (no nested layout)")
+        count = int(scatter_el.get("count", "5"))
+        if count < 1:
+            count = 5
+        return [repeated_el] * count
     children = list(scatter_el)
     shape_children = [c for c in children if c.tag == "shape" and not _has_nested_layout(c)]
+    return shape_children
+
+
+def render_scatter(scatter_el: ET.Element, motifs_dir: Path, seed: int | None = None) -> str:
+    """Render scatter layout (no nesting): children placed randomly. Supports repeated with count.
+    When shapes have motif_scale: size and spacing from motif size. When not: scale and spacing
+    from effective count (scale_as_count or actual count). Use scale_as_count to unify scale across diagrams."""
+    shape_children = _scatter_shape_children(scatter_el)
     if not shape_children:
-        raise ValueError("Scatter has no shape children")
+        raise ValueError("Scatter has no shape children (use <repeated><shape .../></repeated> with count=\"n\" or explicit shapes)")
+    actual_count = len(shape_children)
+    effective_count = _scatter_effective_count(scatter_el, actual_count)
+    uses_motifs = any(_has_motif_scale(c) for c in shape_children)
     rng = random.Random(seed)
-    margin = 15
-    positions = _scatter_positions(len(shape_children), margin, MIN_CENTRE_TO_CENTRE, rng)
-    scale = ELEMENT_SCALE_SCATTER
+    if uses_motifs:
+        max_motif_scale = max(_placement_scale(c, ELEMENT_SCALE_SCATTER) for c in shape_children)
+        margin = 50.0 * max_motif_scale + 1.0
+        min_dist = 100.0 * max_motif_scale
+        layout_scale = ELEMENT_SCALE_SCATTER
+    else:
+        layout_scale = _scatter_scale_for_count(effective_count)
+        margin = 50.0 * layout_scale + 1.0
+        min_dist = 100.0 * layout_scale
+    positions = _scatter_positions(actual_count, margin, min_dist, rng)
     fragments: list[str] = []
     for i, (shape_el, (cx, cy)) in enumerate(zip(shape_children, positions)):
         frag = _shape_to_svg_fragment(shape_el, motifs_dir, str(i))
-        fragments.append(_place_fragment(frag, cx, cy, scale))
+        place_scale = _placement_scale(shape_el, layout_scale)
+        fragments.append(_place_fragment(frag, cx, cy, place_scale))
     body = "\n".join(fragments)
     return _svg_wrapper(body, "scatter")
+
+
+def _scatter_inside_shape_inside_check(
+    key: str,
+    vertices: list[tuple[float, float]],
+    margin: float,
+) -> tuple[object, tuple[float, float, float, float]]:
+    """Build (inside_check, bounds) for placing scatter inside a shape. Uses container helpers (circle/polygon inside + edge margin)."""
+    key = (key or "square").strip().lower()
+    bbox = container.get_shape_bbox(key, vertices, "")
+    x_min, x_max, y_min, y_max = bbox
+
+    if key == "circle":
+        # Centre (50, 50), radius from bbox
+        r = (x_max - x_min) / 2.0
+        cx_centre, cy_centre = 50.0, 50.0
+
+        def inside_check(cx: float, cy: float) -> bool:
+            return math.hypot(cx - cx_centre, cy - cy_centre) <= r - margin
+
+        bounds = (x_min, x_max, y_min, y_max)
+        return inside_check, bounds
+    if key == "semicircle":
+        # Vertically centred: circle centre (50, 67.5), flat at bottom
+        cy_centre = 67.5
+        r = container.SEMICIRCLE_RADIUS
+        arc_top_y = cy_centre - r
+
+        def inside_check(cx: float, cy: float) -> bool:
+            if math.hypot(cx - 50, cy - cy_centre) > r - margin:
+                return False
+            if cy > cy_centre - margin or cy < arc_top_y + margin:
+                return False
+            return True
+
+        bounds = (50 - r, 50 + r, arc_top_y + margin, cy_centre - margin)
+        return inside_check, bounds
+    if key == "cross":
+        # Cross: centre + 4 arms only (exclude corner notches); keep margin from edges
+        if not vertices:
+            bounds = (x_min, x_max, y_min, y_max)
+            return (lambda cx, cy: x_min + margin <= cx <= x_max - margin and y_min + margin <= cy <= y_max - margin), bounds
+        dist_margin = getattr(container, "CROSS_EDGE_MARGIN", margin)
+
+        def inside_check(cx: float, cy: float) -> bool:
+            if not container._point_in_cross(cx, cy):
+                return False
+            return container.min_distance_to_edges((cx, cy), vertices) >= dist_margin
+
+        bounds = (x_min, x_max, y_min, y_max)
+        return inside_check, bounds
+    # Polygon (regular or symbol)
+    if vertices:
+        use_convex = key in (
+            "square", "triangle", "pentagon", "hexagon", "heptagon", "octagon",
+            "right_angled_triangle", "rectangle",
+        )
+        # Use at least margin (needed so shape fits); triangle may add extra buffer via TRIANGLE_EDGE_MARGIN
+        edge_margin = max(margin, container.TRIANGLE_EDGE_MARGIN if key == "triangle" else 0)
+
+        def inside_check(cx: float, cy: float) -> bool:
+            if use_convex:
+                ok = container.point_in_convex_polygon((cx, cy), vertices)
+            else:
+                ok = container.point_in_polygon_ray((cx, cy), vertices)
+            if not ok:
+                return False
+            return container.min_distance_to_edges((cx, cy), vertices) >= edge_margin
+
+        bounds = (x_min, x_max, y_min, y_max)
+        return inside_check, bounds
+    # Fallback: rectangle inset by margin
+    bounds = (x_min, x_max, y_min, y_max)
+
+    def inside_check(cx: float, cy: float) -> bool:
+        return (x_min + margin <= cx <= x_max - margin and
+                y_min + margin <= cy <= y_max - margin)
+
+    return inside_check, bounds
+
+
+def render_shape_with_scatter(
+    shape_el: ET.Element, motifs_dir: Path, *, seed: int | None = None
+) -> str:
+    """Render a shape (polygon/circle) whose content is a scatter of shapes. Positions are chosen
+    so every shape fits entirely inside the boundary (no clipping unless XML supports it later)."""
+    scatter_el = shape_el.find("scatter")
+    if scatter_el is None:
+        raise ValueError("Shape has no scatter child")
+    shape_children = _scatter_shape_children(scatter_el)
+    if not shape_children:
+        raise ValueError("Scatter inside shape has no shape children (use repeated or explicit shapes)")
+    key = (shape_el.get("key") or "square").strip().lower()
+    if key not in container.SHAPES_ALL:
+        raise ValueError(f"Unknown shape key: {key!r}")
+    vertices, path_d, path_d_stroke, stroke_lines, symbol_transform, _ = container.get_shape_geometry(
+        key, motifs_dir
+    )
+    bbox = container.get_shape_bbox(key, vertices, path_d)
+    x_min, x_max, y_min, y_max = bbox
+    # Margin and min_dist: when motifs, from motif size; else from effective count (scale_as_count or actual).
+    actual_count = len(shape_children)
+    effective_count = _scatter_effective_count(scatter_el, actual_count)
+    uses_motifs = any(_has_motif_scale(c) for c in shape_children)
+    if uses_motifs:
+        layout_scale = ELEMENT_SCALE_SCATTER
+        max_scale = max(_placement_scale(c, layout_scale) for c in shape_children)
+    else:
+        layout_scale = _scatter_scale_for_count(effective_count) * SCATTER_INSIDE_SHAPE_SCALE_FACTOR
+        max_scale = layout_scale
+    shape_radius = 50.0 * max_scale
+    margin = shape_radius + 1.0  # buffer so shape fits inside boundary; we do not clip
+    min_dist = 100.0 * max_scale
+    inside_check, bounds = _scatter_inside_shape_inside_check(key, vertices, margin)
+    try:
+        positions = container.random_positions(
+            actual_count,
+            min_dist=min_dist,
+            seed=seed,
+            inside_check=inside_check,
+            bounds=bounds,
+            max_attempts=12000,
+        )
+    except SystemExit as e:
+        raise ValueError(f"Could not place {actual_count} shapes inside {key!r}: {e}") from e
+    # Single scale per shape from layout or motif_scale (XML); no position-based variation.
+    fragments = []
+    for i, (child_el, (cx, cy)) in enumerate(zip(shape_children, positions)):
+        place_scale = _placement_scale(child_el, layout_scale)
+        frag = _shape_to_svg_fragment(child_el, motifs_dir, str(i))
+        fragments.append(_place_fragment(frag, cx, cy, place_scale))
+    line_type = (shape_el.get("line_type") or "solid").strip().lower()
+    dash_attr = ' stroke-dasharray="8 4"' if line_type == "dashed" else ""
+    body = "\n".join(fragments) + "\n"
+    outline_parts = []
+    if stroke_lines is not None:
+        outline_parts = [
+            f'  <line x1="{x1:.2f}" y1="{y1:.2f}" x2="{x2:.2f}" y2="{y2:.2f}" stroke-width="2"{dash_attr} />'
+            for x1, y1, x2, y2 in stroke_lines
+        ]
+    else:
+        # Use path_d_stroke if present, else path_d (container returns path_d_stroke=None for circle/polygons)
+        stroke_d = path_d_stroke if path_d_stroke is not None else path_d
+        stroke_esc = stroke_d.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+        outline_parts = [f'  <path d="{stroke_esc}" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="miter" stroke-linecap="butt"{dash_attr} />']
+    if outline_parts:
+        if symbol_transform:
+            body += f'  <g transform="{symbol_transform}">\n' + "\n".join(outline_parts) + "\n  </g>\n"
+        else:
+            body += "\n".join(outline_parts) + "\n"
+    return _svg_wrapper(body, "shape-scatter")
 
 
 def render_stack(stack_el: ET.Element, motifs_dir: Path, *, seed: int | None = None) -> str:
@@ -635,7 +862,8 @@ def render_stack(stack_el: ET.Element, motifs_dir: Path, *, seed: int | None = N
     fragments: list[str] = []
     for i, (child_el, (cx, cy)) in enumerate(zip(children, positions)):
         frag = _element_to_fragment(child_el, motifs_dir, seed=seed, unique_id=str(i))
-        fragments.append(_place_fragment(frag, cx, cy, scale_draw))
+        place_scale = _placement_scale(child_el, scale_draw)
+        fragments.append(_place_fragment(frag, cx, cy, place_scale))
     body = "\n".join(fragments)
     return _svg_wrapper(body, "stack")
 
@@ -680,6 +908,7 @@ def render_array(array_el: ET.Element, motifs_dir: Path, *, seed: int | None = N
                 place_scale = min(scale, nested_scale) / nested_scale
             else:
                 place_scale = scale
+            place_scale = _placement_scale(repeated_el, place_scale)
             fragments = [
                 _place_fragment(_element_to_fragment(repeated_el, motifs_dir, seed=(seed + i) if seed is not None else i, unique_id=str(i)), cx, cy, place_scale)
                 for i, (cx, cy) in enumerate(positions)
@@ -749,6 +978,7 @@ def render_array(array_el: ET.Element, motifs_dir: Path, *, seed: int | None = N
             place_scale = min(scale, nested_scale) / nested_scale
         else:
             place_scale = scale
+        place_scale = _placement_scale(child_el, place_scale)
         fragments.append(_place_fragment(frag, cx, cy, place_scale))
     # Loop path (circle or path_shape outline) behind elements
     if atype == "loop" and positions:
@@ -803,8 +1033,10 @@ def render_diagram_to_svg(
         motifs_dir = _REPO_ROOT / "nvr-symbols"
 
     if root.tag == "shape":
+        if root.find("scatter") is not None:
+            return render_shape_with_scatter(root, motifs_dir, seed=seed)
         if _has_nested_layout(root):
-            raise ValueError("Shape has nested layout; not supported in this version")
+            raise ValueError("Shape has nested layout (other than scatter); not supported in this version")
         return single_shape.render_shape_to_svg(root, motifs_dir=motifs_dir)
     if root.tag == "scatter":
         return render_scatter(root, motifs_dir, seed=seed)

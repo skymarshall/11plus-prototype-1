@@ -97,6 +97,16 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
+    <!-- Force this shape to be drawn at a standardized motif size (small, medium, large) instead of layout scale. -->
+    <xs:attribute name="motif_scale">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="small"/>
+          <xs:enumeration value="medium"/>
+          <xs:enumeration value="large"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="PartitionType">
@@ -131,15 +141,27 @@
     </xs:restriction>
   </xs:simpleType>
 
-  <!-- Scatter: 1D array of elements (shape|stack|array), placed randomly in the bounding box. -->
+  <!-- Scatter: 1D array of elements (shape|stack|array), placed randomly in the bounding box. Optional repeated + count for uniform motifs. -->
   <xs:complexType name="ScatterType">
     <xs:sequence>
-      <xs:choice minOccurs="1" maxOccurs="unbounded">
-        <xs:element name="shape" type="ShapeType"/>
-        <xs:element name="stack" type="StackType"/>
-        <xs:element name="array" type="ArrayType"/>
+      <xs:choice>
+        <xs:element name="repeated">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="shape" type="ShapeType"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:choice minOccurs="1" maxOccurs="unbounded">
+          <xs:element name="shape" type="ShapeType"/>
+          <xs:element name="stack" type="StackType"/>
+          <xs:element name="array" type="ArrayType"/>
+        </xs:choice>
       </xs:choice>
     </xs:sequence>
+    <xs:attribute name="count" type="xs:positiveInteger"/>
+    <!-- Scale as if this many elements: use for uniform scaling across diagrams (e.g. scatter of 2 and scatter of 3 both scale_as_count="3") -->
+    <xs:attribute name="scale_as_count" type="xs:positiveInteger"/>
     <xs:attribute name="symmetry">
       <xs:simpleType>
         <xs:restriction base="xs:token">

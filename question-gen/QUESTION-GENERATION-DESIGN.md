@@ -246,6 +246,82 @@ Motifs may appear in **any type of layout** (single centred, scatter, stack, arr
 
 **Symmetry axes** = reflection symmetry lines in default orientation (`-` horizontal, `│` vertical, `/` `\` diagonals). **Rot. order** = rotational symmetry order (see Symmetry and rotational symmetry below). When forcing a layout to be symmetric about a line, use only elements that have that line of symmetry (for motifs see standardized sizes in this section). For **canonical SVG** per motif, use **nvr-symbol-svg-design.md** and **`nvr-symbols/`**. **Fill:** solid black unless the question specifies a fill variation.
 
+#### Scaling, spacing, and motif sizes (renderer rules)
+
+This subsection defines how the renderer scales and spaces **children** of each layout type (so that diagrams fit the viewBox and do not overlap), and how the **three motif sizes** (small, medium, large) are defined. All values below refer to a **viewBox of 0 0 100 100**. Shapes are drawn in a local coordinate system where the shape’s bounding box has diameter 100; placement is done by translating and scaling that fragment so the shape’s centre is at `(cx, cy)` with scale `s` (i.e. the shape occupies roughly `cx ± 50s`, `cy ± 50s` in viewBox units).
+
+**Scatter (top-level or inside a shape)**
+
+- **Spacing:** Child centres are placed with a **minimum centre-to-centre distance** so shapes do not overlap. Positions are chosen by rejection sampling within the allowed region. For **non-motif** scatters, min distance is tied to scale (see below). For **motif** scatters, min distance = 100 × (motif scale).
+- **Scale:** When shapes have **motif_scale**, size and spacing are determined by the motif size (small/medium/large). When **no motif_scale**, scale and spacing vary by **effective count** (actual count or `scale_as_count`): fewer elements → larger scale; the renderer uses the most generous scale that still avoids overlap (see proposed table below).
+- **Scatter inside a shape:** The allowed region is **inside the shape boundary** with an **inset margin** from the outline (margin ≥ 50×scale so a shape centred at the boundary edge does not stick out). The renderer uses an *inside_check* (point-in-circle for circle, point-in-polygon with edge margin for polygons) and places centres only where they pass the check. No clipping: positions are chosen so every placed shape fits inside the boundary. To avoid placement failure in tight or irregular regions (e.g. triangle), the renderer applies a **scatter-inside-shape scale factor** (e.g. **0.55**): scale used for margin and min_dist is **scale(*n*) × 0.55**, so elements are smaller and placement is more likely to succeed.
+
+**Scatter: proposed scale and spacing by count (non-motif, no overlap)**
+
+To be **as generous as possible** with scale without allowing overlap, use the following. Shape diameter in viewBox = **100×scale**; for no overlap, **min centre-to-centre = 100×scale**. The usable region (top-level) has margin **50×scale** from each edge, so side length = **100×(1 − scale)**. Fitting *n* circles of diameter *D* = 100×scale in a square of side *L* = 100(1−scale) (grid bound) requires *L* ≥ *D*×√*n*, hence **1−scale ≥ scale×√*n***, so **scale ≤ 1/(1 + √*n*)**. A small safety factor (e.g. 0.99) accommodates random placement and floating point.
+
+**Formula (generous, no overlap):**
+
+- **scale(*n*) = 0.99 / (1 + √*n*)**  
+- **min centre-to-centre = 100×scale(*n*)**  
+- **margin (from viewBox or shape edge) = 50×scale(*n*) + ε** (e.g. ε = 1)
+
+**Proposed scale and spacing table (viewBox 0 0 100 100):**
+
+| *n* (effective count) | scale (proposed) | diameter (viewBox) | min centre-to-centre | margin (min from edge) |
+|------------------------|------------------|--------------------|----------------------|-------------------------|
+| 1 | 0.495 | 49.5 | 49.5 | 25.8 |
+| 2 | 0.414 | 41.4 | 41.4 | 21.7 |
+| 3 | 0.362 | 36.2 | 36.2 | 19.1 |
+| 4 | 0.330 | 33.0 | 33.0 | 17.5 |
+| 5 | 0.306 | 30.6 | 30.6 | 16.3 |
+| 6 | 0.287 | 28.7 | 28.7 | 15.4 |
+| 7 | 0.271 | 27.1 | 27.1 | 14.6 |
+| 8 | 0.258 | 25.8 | 25.8 | 13.9 |
+| 9 | 0.248 | 24.8 | 24.8 | 13.4 |
+| 10 | 0.238 | 23.8 | 23.8 | 12.9 |
+| 12 | 0.222 | 22.2 | 22.2 | 12.1 |
+| 15 | 0.204 | 20.4 | 20.4 | 11.2 |
+| 20 | 0.182 | 18.2 | 18.2 | 10.1 |
+
+**Implementation note:** The renderer may use **scale(*n*) = 0.99/(1 + √*n*)** (capped at a maximum, e.g. 0.5 for *n*=1) and set **min_dist = 100×scale**, **margin = 50×scale + 1**. Use **effective count** = actual number of elements or `scale_as_count` when set (so multiple diagrams can share the same scale by setting the same `scale_as_count`). **scale_as_count** must be ≥ actual count (renderer clamps so effective_count ≥ actual_count) to avoid placement failure. For **scatter inside a shape**, multiply scale by a **scatter-inside-shape scale factor** (e.g. **0.55**) so margin and min_dist are more conservative and placement succeeds in irregular containers (e.g. triangle).
+
+These values are suitable when placing a scatter inside an **empty bounding box**.  If the scatter is inside a shape, these values are subject to a multiplication factor of TBD.
+
+**Stack**
+
+- **Spacing:** Stack elements are offset along the **stack direction** by a fraction of the element size: **offset = size × (1 − stack_offset)**, with *stack_offset* (e.g. 0.52) controlling overlap (higher = tighter stack). A **cross-axis step** (e.g. 0.2 × element size) is applied so successive elements step slightly perpendicular to the stack (e.g. “step right” when stacking up).
+- **Scale:** Positions are computed using a **position scale** (e.g. 0.28). The **draw scale** is the minimum of (position_scale × draw_scale_factor) and the **maximum scale that keeps all stack elements inside the viewBox** (so no shape centre is closer than 50×scale to the viewBox edge). The draw-scale factor (e.g. 1.6) allows stacks to be drawn larger than the overlap would suggest, subject to that cap.
+
+**Array (rectangular)**
+
+- **Spacing:** No extra spacing at boundaries; the viewBox is divided into `rows × cols` equal cells. Cell centres are at `(w×(c+0.5), h×(r+0.5))` with `w = 100/cols`, `h = 100/rows`.
+- **Scale:** The **array scale** is the largest scale such that shapes do not overlap: **scale = min(w, h) / 100**, i.e. the shape diameter (100×scale) fits in the smaller of cell width or height.
+
+**Array (loop)**
+
+- **Spacing:** Elements are placed on a circle or polygon path. **Radius** (circle or polygon bounding radius) is **50×(1 − scale)** so the path fits inside the viewBox with the chosen scale. For a **circle**, positions are evenly spaced by angle. For a **polygon**, positions may be at **vertices** (one per vertex) or on **edges** (e.g. *per_edge* points per edge, evenly spaced along each edge).
+- **Scale:** For a circle or one-per-vertex polygon: **scale_max = sin(π/n) / (1 + sin(π/n))** where *n* is the number of positions, so that the chord between adjacent positions is at least the shape diameter. For **multiple shapes per edge** (*per_edge* > 1): **scale_max = sin(π/n_sides) / ((per_edge+1) + sin(π/n_sides))** so spacing along each edge is sufficient. The **draw scale** is **scale_max × loop_scale_factor** (e.g. 0.85) so shapes are slightly smaller than the no-overlap maximum.
+
+**Array (triangular)**
+
+- **Spacing:** No spacing at boundaries. Row *r* has *r* cells (row 1 has 1, row 2 has 2, …). Cell size is **cell = min(100 / max_cols, 100 / num_rows)**; centres are placed in a triangular formation and centred in the viewBox.
+- **Scale:** **scale = cell / 100** so each shape fits in one triangular cell.
+
+**Nested layouts (e.g. array of stacks):** When a child of an array or stack is itself a layout (stack or array), the **perpendicular rule** (see QUESTION-XML-SPECIFICATION) may apply: only the **smaller** of the outer scale and the inner layout’s effective scale is used for the nested content, and only for **rectangular** arrays and stacks (not loop or triangular).
+
+**Motif standardized sizes (small, medium, large)**
+
+Motifs are drawn at a **fixed cell size** in viewBox units, independent of the container’s layout scale. The renderer uses three sizes so that templates can refer to “small”, “medium”, or “large” motifs.
+
+| Size    | Use | ViewBox cell size (nominal) | Notes |
+|---------|-----|-----------------------------|--------|
+| **Small**  | Motifs at **lower nesting** (e.g. inside a shape that is inside another layout). | e.g. 7.5 units | Default when the motif is not at top level or not a direct child of the top-level layout. |
+| **Medium** | Motifs at **top level** or in a shape that is a **direct child** of the top level. | e.g. 12.5 units | Default for top-level or one-level-down motifs. Reference size used in motif placement (e.g. nvr-symbol-svg-design.md “1/8 of viewBox”). |
+| **Large**  | When the template explicitly requests a larger motif (e.g. “one large circle”). | e.g. 17.5 units | Used only when specified; gives a motif that reads as dominant in the cell. |
+
+**Placement constraints for motifs inside shapes:** Motif **centres** must lie inside the shape, with a **minimum distance from the shape boundary** (e.g. half the motif cell size, or a fixed margin such as 6.25 viewBox units) so that the motif graphic does not overlap the container outline. For **circle** containers, the centre must satisfy distance from (50, 50) ≤ radius − margin. For **polygons**, the centre must pass a point-in-polygon test and the distance from the centre to the nearest edge must be ≥ margin. The **minimum centre-to-centre distance** between motifs (e.g. 12 viewBox units) avoids overlap of motif graphics.
+
 #### Line types (3.5)
 
 | Key | Description | SVG / usage |

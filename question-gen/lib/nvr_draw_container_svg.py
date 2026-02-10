@@ -43,7 +43,7 @@ MAX_PLACEMENT_ATTEMPTS = 2000
 MAX_PLACEMENT_ATTEMPTS_SYMMETRIC = 6000  # symmetric layout needs more tries (canonical half + line spacing)
 
 # Regular polygons (guide §3.1). Pentagon–octagon use 40 so 10 motifs fit with CELL_HALF margin (square/circle use 35/50).
-POLYGON_RADIUS: dict[str, float] = {"triangle": 50.0, "pentagon": 38.0, "hexagon": 40.0, "heptagon": 40.0, "octagon": 40.0}  # pentagon tightened 2
+POLYGON_RADIUS: dict[str, float] = {"triangle": 47.0, "pentagon": 38.0, "hexagon": 40.0, "heptagon": 40.0, "octagon": 40.0}  # pentagon tightened 2
 DEFAULT_POLYGON_RADIUS = 40.0
 POLYGON_CY: dict[str, float] = {"triangle": 62.5}
 DEFAULT_POLYGON_CY = 50.0

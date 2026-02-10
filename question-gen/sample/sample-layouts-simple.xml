@@ -108,15 +108,31 @@
   </diagram>
   <!-- 12. Nested: 6-loop of 2×2 arrays of solid_black shapes (circle, square, triangle, hexagon) -->
   <diagram id="loop-six-2x2-black">
-    <array type="loop" count="6" draw_path="true">
+    <array type="loop" count="6">
       <repeated>
-        <array type="rectangular" rows="2" cols="2">
-          <shape key="circle" shading="solid_black"/>
-          <shape key="square" shading="solid_black"/>
-          <shape key="triangle" shading="solid_black"/>
+        <array type="rectangular" draw_mesh="true" rows="2" cols="2">
+          <shape key="hexagon" shading="solid_black"/>
+          <shape key="hexagon" shading="solid_black"/>
+          <shape key="hexagon" shading="solid_black"/>
           <shape key="hexagon" shading="solid_black"/>
         </array>
       </repeated>
     </array>
+  </diagram>
+  <!-- 13. Single shape: motif as container (heart outline) -->
+  <diagram id="shape-motif-heart">
+    <shape key="heart" line_type="solid" shading="white"/>
+  </diagram>
+  <!-- 14. Circle with scatter of motif shapes inside (heart, plus, star) -->
+  <diagram id="scatter-motifs-in-circle">
+    <shape key="circle" line_type="solid" shading="white">
+      <scatter>
+        <shape key="heart" shading="solid_black"/>
+        <shape key="plus" shading="grey"/>
+        <shape key="star" shading="solid_black"/>
+        <shape key="heart" shading="grey_light"/>
+        <shape key="plus" shading="white"/>
+      </scatter>
+    </shape>
   </diagram>
 </diagrams>
