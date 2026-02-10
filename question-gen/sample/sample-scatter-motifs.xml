@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Scatter layouts using repeated motifs: same motif per diagram, all black or white.
+     Uses scatter repeated + count; motif_scale for standardized sizes.
+     Render: python lib/nvr_draw_layout.py sample/sample-scatter-motifs.xml -o out (prefix scatter-motifs). -->
+<diagrams xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../question-xml.xsd">
+
+  <!-- 1. Top-level scatter: 6 identical black circles (repeated), medium motif size -->
+  <diagram id="scatter-repeat-black">
+    <scatter count="6">
+      <repeated>
+        <shape key="circle" shading="solid_black" motif_scale="medium"/>
+      </repeated>
+    </scatter>
+  </diagram>
+
+  <!-- 2. Top-level scatter: 5 identical white circles (repeated), medium motif size -->
+  <diagram id="scatter-repeat-white">
+    <scatter count="5">
+      <repeated>
+        <shape key="circle" shading="white" motif_scale="medium"/>
+      </repeated>
+    </scatter>
+  </diagram>
+
+  <!-- 3. Top-level scatter: 8 black circles, small motif size -->
+  <diagram id="scatter-repeat-black-small">
+    <scatter count="8">
+      <repeated>
+        <shape key="circle" shading="solid_black" motif_scale="small"/>
+      </repeated>
+    </scatter>
+  </diagram>
+
+  <!-- 4. Top-level scatter: 4 white circles, large motif size -->
+  <diagram id="scatter-repeat-white-large">
+    <scatter count="4">
+      <repeated>
+        <shape key="circle" shading="white" motif_scale="large"/>
+      </repeated>
+    </scatter>
+  </diagram>
+
+  <!-- 5. Shape (square) with scatter of repeated black circles inside -->
+  <diagram id="shape-scatter-repeat-black">
+    <shape key="square" line_type="solid" shading="white">
+      <scatter count="5">
+        <repeated>
+          <shape key="circle" shading="solid_black" motif_scale="medium"/>
+        </repeated>
+      </scatter>
+    </shape>
+  </diagram>
+
+  <!-- 6. Shape (circle) with scatter of repeated white circles inside -->
+  <diagram id="shape-scatter-repeat-white">
+    <shape key="circle" line_type="solid" shading="white">
+      <scatter count="6">
+        <repeated>
+          <shape key="circle" shading="white" motif_scale="medium"/>
+        </repeated>
+      </scatter>
+    </shape>
+  </diagram>
+
+  <!-- 7. Triangle with scatter of repeated black triangles (same motif, black) -->
+  <diagram id="shape-scatter-repeat-triangle-black">
+    <shape key="triangle" line_type="solid" shading="white">
+      <scatter count="5">
+        <repeated>
+          <shape key="triangle" shading="solid_black" motif_scale="medium"/>
+        </repeated>
+      </scatter>
+    </shape>
+  </diagram>
+</diagrams>

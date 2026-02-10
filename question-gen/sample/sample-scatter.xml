@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Scatter layouts: shape-with-scatter (square, triangle, hexagon, pentagon, circle) plus top-level scatters (2-5 shapes).
+     Render: python lib/nvr_draw_layout.py sample/sample-scatter.xml -o out (use prefix scatter) -->
+<diagrams xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="../question-xml.xsd">
+
+  <!-- 1. Square with scatter of 4 shapes (circles and squares, varied shading) -->
+  <diagram id="scatter-in-square">
+    <shape key="square" line_type="solid" shading="white">
+      <scatter>
+        <shape key="circle" shading="white"/>
+        <shape key="circle" shading="grey"/>
+        <shape key="square" shading="grey_light"/>
+        <shape key="circle" shading="solid_black"/>
+      </scatter>
+    </shape>
+  </diagram>
+
+  <!-- 2. Triangle with scatter of 3 shapes -->
+  <diagram id="scatter-in-triangle">
+    <shape key="triangle" line_type="solid" shading="white">
+      <scatter>
+        <shape key="circle" shading="white"/>
+        <shape key="square" shading="grey"/>
+        <shape key="triangle" shading="grey_light"/>
+      </scatter>
+    </shape>
+  </diagram>
+
+  <!-- 3. Hexagon with scatter of 5 shapes -->
+  <diagram id="scatter-in-hexagon">
+    <shape key="hexagon" line_type="solid" shading="white">
+      <scatter>
+        <shape key="circle" shading="white"/>
+        <shape key="square" shading="grey"/>
+        <shape key="triangle" shading="solid_black"/>
+        <shape key="pentagon" shading="grey_light"/>
+        <shape key="hexagon" shading="white"/>
+      </scatter>
+    </shape>
+  </diagram>
+
+  <!-- 4. Pentagon with scatter of 4 shapes (mixed) -->
+  <diagram id="scatter-in-pentagon">
+    <shape key="pentagon" line_type="dashed" shading="white">
+      <scatter>
+        <shape key="square" shading="grey"/>
+        <shape key="circle" shading="solid_black"/>
+        <shape key="triangle" shading="white"/>
+        <shape key="circle" shading="grey_light"/>
+      </scatter>
+    </shape>
+  </diagram>
+
+  <!-- 5. Circle (shape container) with scatter of 6 shapes -->
+  <diagram id="scatter-in-circle">
+    <shape key="circle" line_type="solid" shading="white">
+      <scatter>
+        <shape key="circle" shading="white"/>
+        <shape key="square" shading="grey"/>
+        <shape key="triangle" shading="grey_light"/>
+        <shape key="pentagon" shading="white"/>
+        <shape key="hexagon" shading="grey"/>
+        <shape key="circle" shading="solid_black"/>
+      </scatter>
+    </shape>
+  </diagram>
+ 
+  <diagram id="scatter-two">
+    <scatter>
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="solid_black"/>
+    </scatter>
+  </diagram> 
+
+  <diagram id="scatter-three">
+    <scatter>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="solid_black"/>
+      <shape key="pentagon" shading="white"/>
+    </scatter>
+  </diagram> 
+
+  <diagram id="scatter-four">
+    <scatter>
+      <shape key="square" shading="white"/>
+      <shape key="triangle" shading="solid_black"/>
+      <shape key="pentagon" shading="grey_light"/>
+      <shape key="hexagon" shading="diagonal_slash"/>
+    </scatter>
+  </diagram>     
+
+  <diagram id="scatter-five">
+    <scatter>
+      <shape key="circle" shading="white"/>
+      <shape key="square" shading="grey"/>
+      <shape key="triangle" shading="solid_black"/>
+      <shape key="pentagon" shading="grey_light"/>
+      <shape key="hexagon" shading="diagonal_slash"/>
+    </scatter>
+  </diagram>  
+
+</diagrams>
