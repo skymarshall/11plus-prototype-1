@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Five sample questions based on NVR Template 3.
+     Template 3: [Answers] array of shapes; [Choose] array type, total size 3-5, mesh lines, any shape, any fill; [Allow] nulls.
+     Variators: [Each] shape at location, [Each] fill at location. Differentiators: [One] shape or fill.
+     Each question has one correct option differing at exactly one location (either shape or fill there). -->
+<questions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../question-xml.xsd">
+
+  <!-- Q1: 2×2 (total size 4). [One] shape: differentiator = shape at position 0. Option 4 has square, others circle. -->
+  <question id="template3-q01" template_id="template3" seed="401">
+    <product subject_code="nvr" topic_code="odd_one_out"/>
+    <question_text>Which grid is the odd one out?</question_text>
+    <explanation>The odd one out has a square in the top-left cell; the others have a circle there.</explanation>
+    <options>
+      <option index="0">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="1">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="2">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="3">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="4">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="square" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+    </options>
+    <correct>4</correct>
+  </question>
+
+  <!-- Q2: 2×2 (total size 4). [One] fill: differentiator = fill at position 1. Option 2 has grey_light, others white. -->
+  <question id="template3-q02" template_id="template3" seed="402">
+    <product subject_code="nvr" topic_code="odd_one_out"/>
+    <question_text>Which grid is the odd one out?</question_text>
+    <explanation>The odd one out has a different shading in the top-right cell.</explanation>
+    <options>
+      <option index="0">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="1">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="2">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="3">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="4">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="true">
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+            <shape key="square" shading="white"/>
+          </array>
+        </diagram>
+      </option>
+    </options>
+    <correct>2</correct>
+  </question>
+
+  <!-- Q3: 1×3 (total size 3). [One] shape: differentiator = shape at position 1. Option 1 has hexagon, others triangle. -->
+  <question id="template3-q03" template_id="template3" seed="403">
+    <product subject_code="nvr" topic_code="odd_one_out"/>
+    <question_text>Which row is the odd one out?</question_text>
+    <explanation>The odd one out has a hexagon in the middle; the others have a triangle there.</explanation>
+    <options>
+      <option index="0">
+        <diagram>
+          <array type="rectangular" rows="1" cols="3" draw_mesh="true" draw_full_grid="true">
+            <shape key="triangle" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="1">
+        <diagram>
+          <array type="rectangular" rows="1" cols="3" draw_mesh="true" draw_full_grid="true">
+            <shape key="triangle" shading="grey"/>
+            <shape key="hexagon" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="2">
+        <diagram>
+          <array type="rectangular" rows="1" cols="3" draw_mesh="true" draw_full_grid="true">
+            <shape key="triangle" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="3">
+        <diagram>
+          <array type="rectangular" rows="1" cols="3" draw_mesh="true" draw_full_grid="true">
+            <shape key="triangle" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+      <option index="4">
+        <diagram>
+          <array type="rectangular" rows="1" cols="3" draw_mesh="true" draw_full_grid="true">
+            <shape key="triangle" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+            <shape key="triangle" shading="grey"/>
+          </array>
+        </diagram>
+      </option>
+    </options>
+    <correct>1</correct>
+  </question>
+
+  <!-- Q4: 2×2 with one null (total size 3). [One] fill: differentiator = fill at position 0. Option 0 has grey, others white. -->
+  <question id="template3-q04" template_id="template3" seed="404">
+    <product subject_code="nvr" topic_code="odd_one_out"/>
+    <question_text>Which grid is the odd one out?</question_text>
+    <explanation>The odd one out has a different shading in the top-left cell.</explanation>
+    <options>
+      <option index="0">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="false">
+            <shape key="circle" shading="grey"/>
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+      <option index="1">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="false">
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+      <option index="2">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="false">
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+      <option index="3">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="false">
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+      <option index="4">
+        <diagram>
+          <array type="rectangular" rows="2" cols="2" draw_mesh="true" draw_full_grid="false">
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <shape key="circle" shading="white"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+    </options>
+    <correct>0</correct>
+  </question>
+
+  <!-- Q5: 2×3 with one null (total size 5). [One] shape: differentiator = shape at position 3. Option 3 has pentagon, others square. -->
+  <question id="template3-q05" template_id="template3" seed="405">
+    <product subject_code="nvr" topic_code="odd_one_out"/>
+    <question_text>Which grid is the odd one out?</question_text>
+    <explanation>The odd one out has a pentagon in the first cell of the second row; the others have a square there.</explanation>
+    <options>
+      <option index="0">
+        <diagram>
+          <array type="rectangular" rows="2" cols="3" draw_mesh="true" draw_full_grid="false">
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+      <option index="1">
+        <diagram>
+          <array type="rectangular" rows="2" cols="3" draw_mesh="true" draw_full_grid="false">
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+      <option index="2">
+        <diagram>
+          <array type="rectangular" rows="2" cols="3" draw_mesh="true" draw_full_grid="false">
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+      <option index="3">
+        <diagram>
+          <array type="rectangular" rows="2" cols="3" draw_mesh="true" draw_full_grid="false">
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="pentagon" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+      <option index="4">
+        <diagram>
+          <array type="rectangular" rows="2" cols="3" draw_mesh="true" draw_full_grid="false">
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <shape key="square" shading="grey_light"/>
+            <null/>
+          </array>
+        </diagram>
+      </option>
+    </options>
+    <correct>3</correct>
+  </question>
+
+</questions>

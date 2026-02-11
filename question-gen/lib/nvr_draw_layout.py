@@ -38,13 +38,11 @@ ELEMENT_SCALE_STACK = 0.28   # used for stack spacing (positions)
 STACK_DRAW_SCALE_FACTOR = 1.6   # draw shapes much larger; capped by _stack_scale_max_in_viewbox
 ELEMENT_SCALE_ARRAY = 0.22   # unused; loop/triangular use _array_scale_max_no_overlap_*
 LOOP_SCALE_FACTOR = 0.85    # draw loop shapes slightly smaller than max; radius (loop size) unchanged
-# Rectangular arrays: no spacing at boundaries (margin=0); scale = min(100/cols, 100/rows)/100 so shapes do not overlap.
+# Rectangular arrays: square cells; cell_size = min(100/cols, 100/rows); grid centred in viewBox.
 def _array_scale_max_no_overlap(rows: int, cols: int) -> float:
-    """Largest scale for a rectangular array so shapes do not overlap. Assumes shape bbox diameter 100 in local coords. No spacing at boundaries (margin=0)."""
-    w = 100.0 / cols
-    h = 100.0 / rows
-    # Diameter in viewBox = 100*scale; need min(w,h) >= 100*scale => scale <= min(w,h)/100
-    return min(w, h) / 100.0
+    """Largest scale for a rectangular array so shapes do not overlap. Square cells using minimum required spacing; grid centred in 0 0 100 100."""
+    cell_size = min(100.0 / cols, 100.0 / rows)
+    return cell_size / 100.0
 
 
 # Motif standardized sizes (design doc §3.4.1): viewBox cell size → scale = cell/100
@@ -368,14 +366,15 @@ def _stack_scale_max_in_viewbox(n: int, direction: str, position_scale: float) -
 
 
 def _array_positions_rectangular(rows: int, cols: int) -> list[tuple[float, float]]:
-    """Cell centres for rows×cols grid in 0 0 100 100. No spacing at boundaries (margin=0)."""
+    """Cell centres for rows×cols grid in 0 0 100 100. Square cells: cell_size = min(100/cols, 100/rows); grid centred in viewBox."""
+    cell_size = min(100.0 / cols, 100.0 / rows)
+    origin_x = 50.0 - (cols * cell_size) / 2.0
+    origin_y = 50.0 - (rows * cell_size) / 2.0
     positions = []
-    w = 100.0 / cols
-    h = 100.0 / rows
     for r in range(rows):
         for c in range(cols):
-            cx = w * (c + 0.5)
-            cy = h * (r + 0.5)
+            cx = origin_x + cell_size * (c + 0.5)
+            cy = origin_y + cell_size * (r + 0.5)
             positions.append((cx, cy))
     return positions
 

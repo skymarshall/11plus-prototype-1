@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Three sample questions based on NVR-QUESTION-TEMPLATES.md
+     Q1, Q2: Template 1 (odd one out, shape containing scatter of motifs).
+     Q3: Template 2 (odd one out, partitioned shape; differentiator partition type). -->
+<questions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:noNamespaceSchemaLocation="../question-xml.xsd">
+
+  <!-- Template 1: Differentiator = number of motifs. Four options have 4 motifs, one has 5. -->
+  <question id="template1-motif-count" template_id="template1" seed="101">
+    <product subject_code="nvr" topic_code="odd_one_out"/>
+    <question_text>Which shape is the odd one out?</question_text>
+    <explanation>The odd one out contains five symbols; the others contain four.</explanation>
+    <options>
+      <option index="0">
+        <diagram>
+          <shape key="square" line_type="solid" shading="white">
+            <scatter>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+      <option index="1">
+        <diagram>
+          <shape key="circle" line_type="solid" shading="grey_light">
+            <scatter>
+              <shape key="square" motif_scale="medium"/>
+              <shape key="square" motif_scale="medium"/>
+              <shape key="square" motif_scale="medium"/>
+              <shape key="square" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+      <option index="2">
+        <diagram>
+          <shape key="triangle" line_type="solid" shading="white">
+            <scatter>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+      <option index="3">
+        <diagram>
+          <shape key="hexagon" line_type="dashed" shading="grey_light">
+            <scatter>
+              <shape key="triangle" motif_scale="medium"/>
+              <shape key="triangle" motif_scale="medium"/>
+              <shape key="triangle" motif_scale="medium"/>
+              <shape key="triangle" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+      <option index="4">
+        <diagram>
+          <shape key="pentagon" line_type="solid" shading="white">
+            <scatter>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+    </options>
+    <correct>2</correct>
+  </question>
+
+  <!-- Template 1: Differentiator = shape. Four options use square or circle (each at least twice), one uses triangle. -->
+  <question id="template1-shape" template_id="template1" seed="202">
+    <product subject_code="nvr" topic_code="odd_one_out"/>
+    <question_text>Which shape is the odd one out?</question_text>
+    <explanation>The odd one out is the triangle; the others are squares or circles.</explanation>
+    <options>
+      <option index="0">
+        <diagram>
+          <shape key="square" line_type="solid" shading="white">
+            <scatter>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+      <option index="1">
+        <diagram>
+          <shape key="square" line_type="solid" shading="grey_light">
+            <scatter>
+              <shape key="square" motif_scale="medium"/>
+              <shape key="square" motif_scale="medium"/>
+              <shape key="square" motif_scale="medium"/>
+              <shape key="square" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+      <option index="2">
+        <diagram>
+          <shape key="circle" line_type="solid" shading="white">
+            <scatter>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+      <option index="3">
+        <diagram>
+          <shape key="circle" line_type="solid" shading="grey_light">
+            <scatter>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+      <option index="4">
+        <diagram>
+          <shape key="triangle" line_type="solid" shading="white">
+            <scatter>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+              <shape key="circle" motif_scale="medium"/>
+            </scatter>
+          </shape>
+        </diagram>
+      </option>
+    </options>
+    <correct>4</correct>
+  </question>
+
+  <!-- Template 2: Partitioned shape. Differentiator = partition type (4 horizontal, 1 vertical). Number of sections constant (2). Shape never the differentiator (shapes vary: square, circle, hexagon). -->
+  <question id="template2-partition-type" template_id="template2" seed="303">
+    <product subject_code="nvr" topic_code="odd_one_out"/>
+    <question_text>Which shape is the odd one out?</question_text>
+    <explanation>The odd one out is divided vertically; the others are divided horizontally.</explanation>
+    <options>
+      <option index="0">
+        <diagram>
+          <shape key="square" line_type="solid">
+            <partition type="horizontal">
+              <section low="0" high="50" shading="white"/>
+              <section low="50" high="100" shading="grey"/>
+            </partition>
+          </shape>
+        </diagram>
+      </option>
+      <option index="1">
+        <diagram>
+          <shape key="square" line_type="solid">
+            <partition type="horizontal">
+              <section low="0" high="50" shading="grey"/>
+              <section low="50" high="100" shading="white"/>
+            </partition>
+          </shape>
+        </diagram>
+      </option>
+      <option index="2">
+        <diagram>
+          <shape key="hexagon" line_type="solid">
+            <partition type="vertical">
+              <section low="0" high="50" shading="grey_light"/>
+              <section low="50" high="100" shading="white"/>
+            </partition>
+          </shape>
+        </diagram>
+      </option>
+      <option index="3">
+        <diagram>
+          <shape key="circle" line_type="solid">
+            <partition type="horizontal">
+              <section low="0" high="50" shading="white"/>
+              <section low="50" high="100" shading="grey_light"/>
+            </partition>
+          </shape>
+        </diagram>
+      </option>
+      <option index="4">
+        <diagram>
+          <shape key="circle" line_type="solid">
+            <partition type="horizontal">
+              <section low="0" high="50" shading="grey"/>
+              <section low="50" high="100" shading="white"/>
+            </partition>
+          </shape>
+        </diagram>
+      </option>
+    </options>
+    <correct>2</correct>
+  </question>
+
+</questions>

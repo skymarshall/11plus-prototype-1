@@ -4,7 +4,7 @@
           xsi:noNamespaceSchemaLocation="../question-xml.xsd">
   <product subject_code="nvr" topic_code="odd_one_out"/>
   <question_text>Which shape is the odd one out?</question_text>
-  <explanation>The others have four motifs; this one has five.</explanation>
+  <explanation>The odd one out contains five symbols; the others contain four.</explanation>
   <options>
     <option index="0">
       <diagram>
