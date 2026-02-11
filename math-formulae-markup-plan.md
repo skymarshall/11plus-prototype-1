@@ -4,6 +4,7 @@
 
 This document plans the changes needed to support a markup language (e.g. **LaTeX**) for mathematical formulae in the database and on the website. Formulae are needed mainly for Mathematics questions (and occasionally elsewhere), in question text, answer options, and explanations.
 
+This is fully implemented and LaTeX fragments appearing in database text is correctly rendered on the front end.
 ---
 
 ## 1. Where formulae appear

@@ -1,6 +1,16 @@
 # NPM Dependency Best Practice Notes
 Date: February 10, 2026
 
+This has **not** been implemented yet.
+
+Currently, npm/npx must be run separately within
+ - a separate Supabase instance directory (used to start/stop the database)
+ - the 11-practise-hub UI directory (used to start/stop the webserver)
+
+Python/Batch scripts are run from question-gen
+
+TODO : Clean this up to use a single npm workspace from the root directory.
+
 ## Topic 1: Best Practices for npm Dependencies
 * **Categorization:** Use `dependencies` for runtime and `devDependencies` for build-time tools.
 * **Stability:** Always commit `package-lock.json` to ensure consistent environments.
