@@ -35,8 +35,8 @@ The pipeline is split into four phases so that authoring, code generation, rende
 
 ```mermaid
 flowchart TD
-  P1["**Phase 1: Author question templates**<br/>Define question types, structure, and variability.<br/>Likely: human. Possibly: agent."]
-  P2["**Phase 2: Compile question templates into a python language script that produces question XML satisfying the template"]
+  P1["**Phase 1: Author question templates**<br/>Define question types, structure, and variability.Likely: human. Possibly: agent."]
+  P2["**Phase 2: Compile question templates into a python language script**<br/>Produces question XML satisfying the template"]
   P3["**Phase 3: Run scripts from Phase 2 to create question XML**<br/>Scripts emit question XML per question instance (seeds/config).<br/>Likely: agent."]
   P4["**Phase 4: Run Python renderer**<br/>Convert question XML → assets (JSON, text, SVG).<br/>Optional single manifest for the batch."]
   P5["**Phase 5: Insert assets into database**<br/>Upload assets to storage; build image URLs.<br/>INSERT questions + answer_options."]
@@ -89,9 +89,47 @@ SVG Diagram files and JSON - these are the final product, precise question defin
 
 ---
 
-## 4. Keywords and verbal question templates
+## 4. Contracts (five-phase workflow)
+
+Contracts between phases so that outputs of one phase are valid inputs to the next.
+
+### Phase 1 → Phase 2: Question template
+
+- **Output:** A question template (human-readable brief).
+- **Contract:** Uses only **keywords and rules** defined in this document (and any linked specs). Written in English with strictly defined terms; default behaviour is specified so an agent can interpret the template without ambiguity for compilation. No machine-readable schema is required; the template is the source of truth for “what this question type is.”
+
+### Phase 2 → Phase 3: Template script
+
+- **Output:** A template script (e.g. Python) that produces question XML.
+- **Contract:** The script:
+  - Accepts at least: **seed** (or equivalent) for reproducibility; optionally **config** or arguments that select variants or count.
+  - **Emits** one or more question XML documents (e.g. to stdout, or to files under a given output path). Each document must conform to the **question XML specification** (QUESTION-XML-SPECIFICATION.md and question-xml.xsd).
+  - Does not write final assets (no SVG/JSON output); that is the role of the renderer (Phase 4).
+
+### Phase 3 → Phase 4: Question XML
+
+- **Output:** Question XML (per question or batch).
+- **Contract:** Each XML document is a **logically unambiguous** definition of one question. It includes:
+  - References needed for the product (e.g. subject and topic identifiers).
+  - A nested structure describing the diagrams for the question and each answer option (layout and formatting intent, not pixel-perfect layout).
+  - Intent that allows the renderer limited non-determinism (e.g. “place randomly in region”) so two runs may differ visually but not logically. The **question XML specification** (QUESTION-XML-SPECIFICATION.md and question-xml.xsd) defines the schema and semantics.
+
+### Phase 4 → Phase 5: Question assets and manifest
+
+- **Output:** Per-question directory containing option assets (e.g. 5 SVGs), a **question_meta.json** (or equivalent), plus an optional single **manifest** for the batch.
+- **Contract:** The renderer:
+  - Consumes question XML only (no direct DB or storage access).
+  - Writes into a per-question directory: **5 option assets** in a defined order (e.g. `option-a.svg` … `option-e.svg`), and a metadata file with at least `correct_index` (0–4), and optionally `template_id`, `seed`, `question_text`, `explanation`, `option_files`.
+  - May write a **manifest.json** (see §8) aggregating all questions in the run. Phase 5 reads this manifest and the directory layout to upload and insert.
+
+
+ (template script) is run per question and **writes assets directly** (SVGs + `question_meta.json`). That corresponds to a combined Phase 2+3+4: the “template script” there is both XML producer and renderer. The contract for that script is as above for “Phase 4 → Phase 5” output (5 option files + metadata); 
+
+## 6. Keywords and verbal question templates
 
 Question templates (Phase 1 output) must use **only** the keywords and rules defined in this section. This section gives the **NVR visual vocabulary** (**element** (3.1)—generic term for any part of the structure: shapes, motifs, layouts, arrays, stacks—then layout, shape containers, motifs, line types, line terminations, line augmentations, shading types, partitions, and concepts), then the full rules for writing verbal question templates (parameters, variators, differentiator, parameter choice rules, frequency modifiers).
+
+This section also contains several specific references to visual instructions on how specific keywords may affect the appearance of the diagrams, in particular with regard to default behavior, allowing templates to unambiguously omit details, and scaling of nested elements.  
 
 ---
 
@@ -193,9 +231,11 @@ Elements in any array (whether shapes or nested layouts) must be **scaled unifor
 | `pentagon` | Regular pentagon (5 sides) | | `│` | 5 |
 | `hexagon` | Regular hexagon (6 sides) | | `│` `-` | 6 |
 | `heptagon` | Regular heptagon (7 sides) | | `│` | 7 |
-| `octagon` | Regular octagon (8 sides) | | `│` `-` | 8 |
+| `octagon` | Regular octagon (8 sides) | | `│` `-` `/` `\`| 8 |
 
 Unless the template specifies otherwise, polygons in this table are **perfectly regular** (e.g. "triangle" = equilateral).
+
+The symmettry axis listed here act as a simple reference for the question template parser, to allow it to retain a rudimentary understanding of the four main lines of symmetry it should track and enforce as dictated by the template.  Tracking full symmetry for polygons (or more complex shapes) of order 5 or higher is out of scope.
 
 **Common irregular shapes:**
 
@@ -227,11 +267,11 @@ Unless the template specifies otherwise, polygons in this table are **perfectly 
 
 **"Irregular shapes" / "any shape" in templates:** When a template uses **"irregular shapes"** or **"any shape"** (or similar) in a [Choose] or variator list without further restriction, the **default** is **all common shapes**—i.e. all common regular and common irregular shapes (and symbols when the template allows). So "irregular shapes" does not mean "irregular only"; it means the full common-shape set unless the template explicitly restricts (e.g. "regular only" or "irregular only").
 
-#### Motif dictionary (3.4)
+#### Motif dictionary 
 
 A **motif** is a shape (any of the keys in the table below) used under **visibility restrictions**: it **cannot be partitioned**, must have **solid shading** (solid or white only—not hatched), and is drawn at a **standardized size** regardless of the scaling that would be imposed by its container. This ensures that all motifs within a question use the same standardized scaling for comparison.
 
-**Default fill:** Motifs are **solid black** by default. The template or question XML may specify a different solid or white fill (e.g. grey, white, grey_light) when needed.
+**Default fill:** Motifs are **solid black** by default. The template or question XML may specify a different solid or white fill (e.g. grey, white, grey_light) when needed. If inside a black container, black motifs must not be used as they will be invisible.  If a black fill containing has been chosen by the generator for question template, it should use white motifs by default, and if the motif colour is the same across multiple diagrams, all diagrams should default to white.
 
 **Standardized sizes:** There are three standard scalings: **small**, **medium**, and **large**. The **default** is **medium** when the motif is in the top-level bounding box or in a shape that is a direct child of the top level. The **default** is **small** for motifs at lower levels of nesting (e.g. inside a shape that is inside another layout). The renderer ignores container-based scaling for motifs and uses these sizes consistently.
 
@@ -250,7 +290,7 @@ Motifs may appear in **any type of layout** (single centred, scatter, stack, arr
 | `triangle` | Triangle filled solid | Equilateral, vertex up | `│` | 3 |
 | `star` | Five-pointed star | Filled star (upright) | `│` | 5 |
 
-**Symmetry axes** = reflection symmetry lines in default orientation (`-` horizontal, `│` vertical, `/` `\` diagonals). **Rot. order** = rotational symmetry order (see Symmetry and rotational symmetry below). When forcing a layout to be symmetric about a line, use only elements that have that line of symmetry (for motifs see standardized sizes in this section). For **canonical SVG** per motif, use **nvr-symbol-svg-design.md** and **`nvr-symbols/`**. **Fill:** solid black unless the question specifies a fill variation.
+**Symmetry axes** = reflection symmetry lines in default orientation (`-` horizontal, `│` vertical, `/` `\` diagonals). **Rot. order** = rotational symmetry order (see Symmetry and rotational symmetry below). When forcing a layout to be symmetric about a line, use only elements that have that line of symmetry (for motifs see standardized sizes in this section). For **canonical SVG** per motif, use **nvr-symbol-svg-design.md** and **`nvr-symbols/`**. 
 
 #### Scaling, spacing, and motif sizes (renderer rules)
 
@@ -488,19 +528,13 @@ Templates may use **common**, **uncommon**, and **rare** to affect the **probabi
 3. **XML→SVG renderer (Phase 4)** — Reads question XML and produces 5 option SVGs and `question_meta.json` per question. The renderer uses only the NVR vocabulary and layout rules; it does not run template logic. See §6 for the renderer’s inputs, outputs, and responsibilities.
 4. **Upload and insert (Phase 5)** — Manifest and asset directories are used to upload SVGs and insert DB rows. Image columns, SQL patterns, and upload steps are in §9.
 
-#### Placeholder for example questions
+#### Example Question Templates
 
-**10 example verbal NVR questions** will be added (or kept in a separate file). Each will be a short verbal description suitable for **compilation into a template script** that emits question XML; the renderer then produces SVGs. All defaults above apply unless the template states otherwise.
-
-**Example Question Template 1 — Odd one out.** Setup: Each answer is a **common shape** with layout type **scatter**. 3 to 5 variators from **shape**, **line style**, **fill**, **motif** or **number of motifs**. **shape** and **fill** are **uncommon** differentiators. **uncommon** add **symmetry** as a variator and an **uncommon** differentiator.
-
-**Example Question Template 2 — Odd one out.** Setup: Each answer is a **common shape** **partitioned** into **sections** using different **shading**. 3 to 4 variators from **shape**, **partition direction**, **number of sections**, **shading sequence of sections**. **shape** is not a differentiator.
-
-Templates must be written so that a compliant Phase 2 agent can compile them into a script that produces **question XML** satisfying the required schema (§5).
+Stored in question-gen\NVR-QUESTION-TEMPLATES.md
 
 ---
 
-## 5. Question XML (required)
+## 7. Question XML (required)
 
 Question XML is the output of Phase 3 and the input to Phase 4 (the renderer). Each document describes **one** question in a logically unambiguous way, using the same vocabulary keys as the templates and NVR visual vocabulary (§4). The **exact schema** (element names, nesting, attributes) is defined in **QUESTION-XML-SPECIFICATION.md** and **question-xml.xsd** in this directory. The following are the **required and recommended** elements.
 
@@ -531,21 +565,9 @@ The renderer is responsible for producing a valid, consistent SVG that obeys the
 
 See **QUESTION-XML-SPECIFICATION.md** for the full schema and sample documents; **question-xml.xsd** for validation.
 
-### Sufficiency for defining the question XML specification
-
-**Yes — the design document provides enough semantics and vocabulary** for a dedicated question XML specification to be written. The following are fully defined here and can be used as the basis for element/attribute names and allowed values:
-
-- **Document-level:** Question identity (stable id), product placement (subject/topic), question text, exactly 5 options, correct answer (0–4), explanation; optional template id, seed.
-- **Diagram structure:** Elements = shape containers, layouts. Layout types: single centred (default), scatter, stack, array. Array types: rectangular (rows × columns; right-angled corner for null-triangle layouts: bottom_left | bottom_right | top_left | top_right, default bottom_left), loop (count), triangular (tapering rows; direction up | down | left | right, default up). Motifs (see §4 motif dictionary) are shapes used under the restrictions in §3.4. Scaling: content scales to fit containers; nested perpendicular single row/column arrays and stacks use the special rule in Layout (3.2) (minimum scale at nested level only, top-level bounding boxes may overlap).
-- **Shape container:** Key (from §4 shape tables), optional partition (type: horizontal | vertical | diagonal | concentric | radial; section bounds 0–100; shading key per section), optional **content** (one of: shape, scatter, stack, or array — same options as the diagram root), line type, shading.
-- **Vocabulary keys:** All valid keys for shapes, motifs, line types, line terminations, line augmentations, and shading types are listed in §4 (tables and rules). Partition types and section-bound rules are specified.
-- **Contracts:** Phase 3 → Phase 4 contract (logically unambiguous, nested diagram description, allowed non-determinism) is stated.
-
-**What the XML specification document must still define:** (1) **Concrete syntax** — element and attribute names, nesting, and document structure (e.g. root element, option children, diagram subtree). (2) **Exact representation** of partition (e.g. how section bounds and per-section shading are encoded), scatter layout (symmetry values), and array (rows/cols vs count vs triangular size). (3) **Formal schema** — XSD, DTD, or equivalent for validation. (4) **Sample documents** — one or more valid question XML examples. The design doc is the semantic and vocabulary source; the XML spec adds the concrete format and validation rules.
-
 ---
 
-## 6. XML→SVG renderer (Phase 4)
+## 8. XML→SVG renderer (Phase 4)
 
 The **renderer** is a Python (or other) program that reads **question XML** and writes **question assets** (SVGs and metadata). It does not connect to the database or upload to storage.
 
@@ -575,44 +597,9 @@ The **renderer** is a Python (or other) program that reads **question XML** and 
 
 ---
 
-## 7. Contracts (five-phase workflow)
-
-Contracts between phases so that outputs of one phase are valid inputs to the next.
-
-### Phase 1 → Phase 2: Question template
-
-- **Output:** A question template (human-readable brief).
-- **Contract:** Uses only **keywords and rules** defined in this document (and any linked specs). Written in English with strictly defined terms; default behaviour is specified so an agent can interpret the template without ambiguity for compilation. No machine-readable schema is required; the template is the source of truth for “what this question type is.”
-
-### Phase 2 → Phase 3: Template script
-
-- **Output:** A template script (e.g. Python) that produces question XML.
-- **Contract:** The script:
-  - Accepts at least: **seed** (or equivalent) for reproducibility; optionally **config** or arguments that select variants or count.
-  - **Emits** one or more question XML documents (e.g. to stdout, or to files under a given output path). Each document must conform to the **question XML specification** (QUESTION-XML-SPECIFICATION.md and question-xml.xsd).
-  - Does not write final assets (no SVG/JSON output); that is the role of the renderer (Phase 4).
-
-### Phase 3 → Phase 4: Question XML
-
-- **Output:** Question XML (per question or batch).
-- **Contract:** Each XML document is a **logically unambiguous** definition of one question. It includes:
-  - References needed for the product (e.g. subject and topic identifiers).
-  - A nested structure describing the diagrams for the question and each answer option (layout and formatting intent, not pixel-perfect layout).
-  - Intent that allows the renderer limited non-determinism (e.g. “place randomly in region”) so two runs may differ visually but not logically. The **question XML specification** (QUESTION-XML-SPECIFICATION.md and question-xml.xsd) defines the schema and semantics.
-
-### Phase 4 → Phase 5: Question assets and manifest
-
-- **Output:** Per-question directory containing option assets (e.g. 5 SVGs), a **question_meta.json** (or equivalent), plus an optional single **manifest** for the batch.
-- **Contract:** The renderer:
-  - Consumes question XML only (no direct DB or storage access).
-  - Writes into a per-question directory: **5 option assets** in a defined order (e.g. `option-a.svg` … `option-e.svg`), and a metadata file with at least `correct_index` (0–4), and optionally `template_id`, `seed`, `question_text`, `explanation`, `option_files`.
-  - May write a **manifest.json** (see §8) aggregating all questions in the run. Phase 5 reads this manifest and the directory layout to upload and insert.
-
-
- (template script) is run per question and **writes assets directly** (SVGs + `question_meta.json`). That corresponds to a combined Phase 2+3+4: the “template script” there is both XML producer and renderer. The contract for that script is as above for “Phase 4 → Phase 5” output (5 option files + metadata); 
 ---
 
-## 8. Output layout and manifest
+## 9. Output layout and manifest
 
 **Recommended layout:**
 
@@ -641,7 +628,7 @@ Phase 5 uses manifest + storage base URL to build full `option_image_url` values
 
 ---
 
-## 9. Storage, database, and insert
+## 10. Storage, database, and insert
 
 ### Image columns and usage
 
@@ -722,7 +709,7 @@ For **diagrams and NVR-style graphics**, SVG is required; assets must use only t
 
 ---
 
-## 10. Script responsibilities (summary)
+## 11. Script responsibilities (summary)
 
 | Phase | Role | Inputs | Outputs |
 |-------|------|--------|--------|
@@ -736,7 +723,7 @@ Optional for Phase 5: dry-run (validate manifest only), subject/topic lookup by 
 
 ---
 
-## 11. Extensibility
+## 12. Extensibility
 
 - **Multiple templates:** Phases 2–4 can support different template types; manifest carries `template_id` per question.
 - **Multiple subjects/topics:** Phase 5 can take subject/topic from manifest or config so one manifest can target different subjects/topics in future.
@@ -744,6 +731,6 @@ Optional for Phase 5: dry-run (validate manifest only), subject/topic lookup by 
 
 ---
 
-## 12. Where implementations live
+## 13. Where implementations live
 
 - **question-gen:** This design doc; XML spec, XSD, and XML→SVG renderer; sample XML and batch script. Further shared config, schemas, or runner scripts can be added here to support multiple question types or repos.
