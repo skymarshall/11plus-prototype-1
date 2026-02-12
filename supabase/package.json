@@ -1,0 +1,14 @@
+{
+    "name": "supabase",
+    "version": "1.0.0",
+    "description": "Supabase configuration and scripts",
+    "scripts": {
+        "status": "supabase status",
+        "start": "supabase start",
+        "stop": "supabase stop",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "devDependencies": {
+        "supabase": "latest"
+    }
+}

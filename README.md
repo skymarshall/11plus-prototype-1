@@ -13,19 +13,29 @@ To run the website locally:
    git clone <YOUR_GIT_URL>
    ```
 
-2. **Go into the web app directory** (the app lives in `11-practise-hub/`):
+2. **Go into the root directory**:
    ```bash
-   cd <YOUR_REPO_NAME>/11-practise-hub
+   cd <YOUR_REPO_NAME>
    ```
 
-3. **Install dependencies**:
+3. **Install dependencies** (installs for all workspaces):
    ```bash
-   npm i
+   npm install
    ```
 
-4. **Start the development server** (auto-reload and preview):
+4. **Start the database** (Supabase):
    ```bash
-   npm run dev
+   npm run db:start
+   ```
+
+   4. **Initialize the database** (Supabase):
+   ```bash
+   init_db.bat
+   ```
+
+5. **Start the development server** (auto-reload and preview):
+   ```bash
+   npm run ui:dev
    ```
 
 The app will need a Supabase backend (and a `.env` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`) for auth and questions. See **11-practise-hub/README.md** and the **Dependencies** section below for local Supabase setup.
@@ -73,15 +83,15 @@ Run insert scripts **after** `create_11plus_supabase.sql`.
   - [Supabase CLI](https://supabase.com/docs/guides/cli) installed.
   - **Docker** (if you use `supabase start` and don't have a custom setup), so the CLI can start local Postgres, Studio, etc.
 
-Install app deps and run:
+Install dependencies from root and run:
 
 ```bash
-cd 11-practise-hub
 npm install
-npm run dev
+npm run db:start
+npm run ui:dev
 ```
 
-Copy `.env.example` to `.env` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (from `supabase status` after `supabase start`). Apply the schema and optional seed scripts as in **11-practise-hub/README.md**.
+Copy `.env.example` to `.env` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (from `npm run db:status` after `npm run db:start`). Apply the schema and optional seed scripts as in **11-practise-hub/README.md**.
 
 ### For the database
 

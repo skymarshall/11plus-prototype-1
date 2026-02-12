@@ -1,0 +1,24 @@
+{
+    "name": "11plus-monorepo",
+    "version": "1.0.0",
+    "description": "Monorepo for 11plus project",
+    "private": true,
+    "workspaces": [
+        "11-practise-hub",
+        "question-gen",
+        "supabase"
+    ],
+    "scripts": {
+        "ui:dev": "npm run dev -w 11-practise-hub",
+        "ui:build": "npm run build -w 11-practise-hub",
+        "ui:test": "npm run test -w 11-practise-hub",
+        "logic:run": "npm start -w question-gen",
+        "db:status": "npm run status -w supabase",
+        "db:start": "npm run start -w supabase",
+        "db:stop": "npm run stop -w supabase",
+        "test:all": "npm test --workspaces"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+}
