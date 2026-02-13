@@ -38,18 +38,46 @@ To run the website locally:
    npm run ui:dev
    ```
 
-The app will need a Supabase backend (and a `.env` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`) for auth and questions. See **11-practise-hub/README.md** and the **Dependencies** section below for local Supabase setup.
+1.  **Clone the repository** using the project's Git URL:
+    ```bash
+    git clone <YOUR_GIT_URL>
+    ```
+
+2.  **Go into the root directory**:
+    ```bash
+    cd <YOUR_REPO_NAME>
+    ```
+
+3.  **Install dependencies** (installs for all workspaces):
+    ```bash
+    npm install
+    ```
+
+4.  **Start the database** (Supabase):
+    ```bash
+    npm run db:start
+    ```
+
+    4.  **Initialize the database** (Supabase):
+    ```bash
+    init_db.bat
+    ```
+
+5.  **Start the development server** (auto-reload and preview):
+    ```bash
+    npm run ui:dev
+    ```
+
+The app will need a Supabase backend (and a `.env` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`) for auth and questions. See **11-practice-hub/README.md** and the **Dependencies** section below for local Supabase setup.
 
 ---
 
 ## What's in this repo
 
-### Web app: `11-practise-hub/`
+###- **Frontend**: [11-practice-hub](./11-practice-hub) (React + Vite + Tailwind) for UK 11+ exam practise (Mathematics, English, Verbal and Non-Verbal Reasoning). Uses Supabase for auth and data. See **11-practice-hub/README.md** for run instructions and local Supabase setup.
 
-React + TypeScript + Vite front end for UK 11+ exam practise (Mathematics, English, Verbal and Non-Verbal Reasoning). Uses Supabase for auth and data. See **11-practise-hub/README.md** for run instructions and local Supabase setup.
-
-- **Tech:** React, TypeScript, Vite, Tailwind CSS, Radix UI, KaTeX (math formulae), Supabase JS client.
-- **Key files:** `src/` (pages, components, services, lib), `package.json`, `.env.example`.
+-   **Tech:** React, TypeScript, Vite, Tailwind CSS, Radix UI, KaTeX (math formulae), Supabase JS client.
+-   **Key files:** `src/` (pages, components, services, lib), `package.json`, `.env.example`.
 
 ### Database and SQL scripts (root)
 

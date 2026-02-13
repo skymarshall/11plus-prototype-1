@@ -11,6 +11,7 @@ import {
   saveAttempt,
   completeSession,
   getSessionAttempts,
+  getSessionQuestions,
 } from '@/services/sessionService';
 import { getQuestionsByIds } from '@/data/questions';
 import { fetchSubjects, getSubjectById } from '@/data/subjects';
@@ -88,7 +89,16 @@ export default function Test() {
 
       const questionIds =
         (location.state as { questionIds?: number[] } | null)?.questionIds ??
-        (await getSessionAttempts(sid)).map((a) => a.question_id);
+        (await getSessionQuestions(sid));
+
+      // Fallback for legacy sessions (before we started saving questions)
+      if (questionIds.length === 0) {
+        const attempts = await getSessionAttempts(sid);
+        if (attempts.length > 0) {
+          questionIds.push(...attempts.map((a) => a.question_id));
+        }
+      }
+
       if (questionIds.length === 0) {
         navigate('/dashboard');
         return;
@@ -277,11 +287,10 @@ export default function Test() {
                     key={option.id}
                     type="button"
                     onClick={() => handleSelectAnswer(option.id)}
-                    className={`rounded-xl border-2 p-5 cursor-pointer transition-colors flex flex-col items-center min-w-0 ${
-                      answers[currentQuestion.id] === option.id
-                        ? 'border-primary bg-primary/5 ring-2 ring-primary'
-                        : 'border-border hover:bg-muted/50 hover:border-muted-foreground/30'
-                    }`}
+                    className={`rounded-xl border-2 p-5 cursor-pointer transition-colors flex flex-col items-center min-w-0 ${answers[currentQuestion.id] === option.id
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary'
+                      : 'border-border hover:bg-muted/50 hover:border-muted-foreground/30'
+                      }`}
                   >
                     <OptionDisplay
                       option_text={option.option_text}
@@ -300,11 +309,10 @@ export default function Test() {
                 {currentQuestion.options.map((option) => (
                   <div
                     key={option.id}
-                    className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${
-                      answers[currentQuestion.id] === option.id
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-muted/50'
-                    }`}
+                    className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${answers[currentQuestion.id] === option.id
+                      ? 'border-primary bg-primary/5'
+                      : 'hover:bg-muted/50'
+                      }`}
                     onClick={() => handleSelectAnswer(option.id)}
                   >
                     <RadioGroupItem value={option.id.toString()} id={`option-${option.id}`} />
@@ -342,13 +350,12 @@ export default function Test() {
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
-                  index === currentIndex
-                    ? 'bg-primary text-primary-foreground'
-                    : answers[questions[index].id] !== undefined
+                className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${index === currentIndex
+                  ? 'bg-primary text-primary-foreground'
+                  : answers[questions[index].id] !== undefined
                     ? 'bg-primary/20 text-primary'
                     : 'bg-muted text-muted-foreground'
-                }`}
+                  }`}
               >
                 {index + 1}
               </button>

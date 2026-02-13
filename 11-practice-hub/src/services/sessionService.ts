@@ -45,7 +45,7 @@ export async function getSessionById(sessionId: number): Promise<PracticeSession
   };
 }
 
-export async function createSession(userId: string, subjectId: number): Promise<PracticeSession> {
+export async function createSession(userId: string, subjectId: number, questionIds: number[]): Promise<PracticeSession> {
   const { data, error } = await supabase
     .from('practice_sessions')
     .insert({
@@ -57,22 +57,60 @@ export async function createSession(userId: string, subjectId: number): Promise<
 
   if (error) throw error;
 
-  const row = data as Record<string, unknown>;
+  const session = data as Record<string, unknown>;
+  const sessionId = session.id as number;
+
+  // Insert questions
+  if (questionIds.length > 0) {
+    const questionsToInsert = questionIds.map((qid, index) => ({
+      practice_session_id: sessionId,
+      question_id: qid,
+      display_order: index + 1,
+    }));
+
+    const { error: matchError } = await supabase
+      .from('practice_session_questions')
+      .insert(questionsToInsert);
+
+    if (matchError) throw matchError;
+  }
+
   return {
-    id: row.id as number,
-    user_id: row.user_id as string,
-    subject_id: row.subject_id as number,
-    question_set_id: row.question_set_id as number | undefined,
-    name: row.name as string | undefined,
-    started_at: row.started_at as string,
-    completed_at: row.completed_at as string | undefined,
+    id: sessionId,
+    user_id: session.user_id as string,
+    subject_id: session.subject_id as number,
+    question_set_id: session.question_set_id as number | undefined,
+    name: session.name as string | undefined,
+    started_at: session.started_at as string,
+    completed_at: session.completed_at as string | undefined,
   };
+}
+
+export async function getSessionQuestions(sessionId: number): Promise<number[]> {
+  const { data, error } = await supabase
+    .from('practice_session_questions')
+    .select('question_id')
+    .eq('practice_session_id', sessionId)
+    .order('display_order', { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => row.question_id as number);
 }
 
 export async function completeSession(sessionId: number): Promise<void> {
   const { error } = await supabase
     .from('practice_sessions')
     .update({ completed_at: new Date().toISOString() })
+    .eq('id', sessionId);
+
+  if (error) throw error;
+}
+
+export async function deleteSession(sessionId: number): Promise<void> {
+  const { error } = await supabase
+    .from('practice_sessions')
+    .delete()
     .eq('id', sessionId);
 
   if (error) throw error;

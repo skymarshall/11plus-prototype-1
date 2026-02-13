@@ -1,6 +1,6 @@
 # Frontend changes for picture-based (NVR) questions
 
-This document describes the changes needed in **11-practise-hub** so that questions with **option images** (e.g. NVR odd-one-out SVGs) and optional **question images** display correctly. The database and types already support `option_image_url` and `question_image_url`; the UI currently only shows text.
+This document describes the changes needed in **11-practice-hub** so that questions with **option images** (e.g. NVR odd-one-out SVGs) and optional **question images** display correctly. The database and types already support `option_image_url` and `question_image_url`; the UI currently only shows text.
 
 ---
 

@@ -4,14 +4,14 @@
     "description": "Monorepo for 11plus project",
     "private": true,
     "workspaces": [
-        "11-practise-hub",
+        "11-practice-hub",
         "question-gen",
         "supabase"
     ],
     "scripts": {
-        "ui:dev": "npm run dev -w 11-practise-hub",
-        "ui:build": "npm run build -w 11-practise-hub",
-        "ui:test": "npm run test -w 11-practise-hub",
+        "ui:dev": "npm run dev -w 11-practice-hub",
+        "ui:build": "npm run build -w 11-practice-hub",
+        "ui:test": "npm run test -w 11-practice-hub",
         "logic:run": "npm start -w question-gen",
         "db:status": "npm run status -w supabase",
         "db:start": "npm run start -w supabase",

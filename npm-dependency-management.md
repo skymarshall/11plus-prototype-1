@@ -57,12 +57,12 @@ TODO : Clean this up to use a single npm workspace from the root directory.
   "name": "my-monorepo-project",
   "private": true, 
   "workspaces": [
-    "11-practise-hub",
+    "11-practice-hub",
     "supabase",
     "question-gen"
   ],
   "scripts": {
-    "ui:dev": "npm run dev -w 11-practise-hub",
+    "ui:dev": "npm install <package-name> -w 11-practice-hub",
     "logic:run": "npm start -w question-gen",
     "db:status": "npx supabase status -w supabase",
     "install:all": "npm install",

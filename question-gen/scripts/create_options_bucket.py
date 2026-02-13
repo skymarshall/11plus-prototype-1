@@ -2,9 +2,26 @@ import boto3
 import os
 import dotenv
 import sys
+from pathlib import Path
 
 # Load env
-dotenv.load_dotenv('question-gen/.env')
+SCRIPT_DIR = Path(__file__).resolve().parent
+ENV_PATH = SCRIPT_DIR.parent / '.env'
+# Assuming question-gen/scripts/create_options_bucket.py
+# .env is in question-gen/.env
+# wait, my clear_options_bucket used question-gen/.env ?
+# clear_options_bucket was moved to question-gen/scripts/
+# .env is in question-gen/
+# So SCRIPT_DIR = question-gen/scripts
+# SCRIPT_DIR.parent = question-gen
+# So ENV_PATH = SCRIPT_DIR.parent / '.env' is correct if .env is in question-gen/
+# Let's verify .env location.
+# ls d:\Dev\Cursor\11plus\question-gen showed .env (Step 9)
+# So yes.
+
+if not ENV_PATH.exists():
+    print(f"Warning: .env not found at {ENV_PATH}")
+dotenv.load_dotenv(ENV_PATH)
 
 endpoint = os.getenv('SUPABASE_STORAGE_S3_URL') or 'http://127.0.0.1:54321/storage/v1/s3'
 access = os.getenv('SUPABASE_STORAGE_ACCESS_KEY')

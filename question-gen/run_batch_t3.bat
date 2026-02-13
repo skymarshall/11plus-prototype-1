@@ -3,10 +3,12 @@ setlocal
 cd /d "%~dp0"
 
 echo --- Step 1: Generating Questions (Template 3) ---
-python question-gen/batch/batch_generate_questions.py ^
+if not exist output\batch_t3 mkdir output\batch_t3
+
+python batch/batch_generate_questions.py ^
   --count 10 ^
-  --template question-gen/question-scripts/gen_template3.py ^
-  --output-dir question-gen/output/batch_t3 ^
+  --template question-scripts/gen_template3.py ^
+  --output-dir output/batch_t3 ^
   --id-prefix t3-q ^
   --id-width 3
 
@@ -18,8 +20,8 @@ if %errorlevel% neq 0 (
 echo.
 echo --- Step 2: Uploading and Inserting ---
 
-python -c "import dotenv, os, sys; dotenv.load_dotenv('question-gen/.env'); import subprocess; sys.exit(subprocess.call([sys.executable, 'question-gen/batch/batch_upload_and_insert_questions.py'] + sys.argv[1:]))" ^
-  --manifest question-gen/output/batch_t3/manifest.json ^
+python -c "import dotenv, os, sys; dotenv.load_dotenv('.env'); import subprocess; sys.exit(subprocess.call([sys.executable, 'batch/batch_upload_and_insert_questions.py'] + sys.argv[1:]))" ^
+  --manifest output/batch_t3/manifest.json ^
   --upload supabase ^
   --bucket options ^
   --base-url http://127.0.0.1:54321/storage/v1/object/public/options ^

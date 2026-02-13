@@ -20,9 +20,17 @@ REM We first delete answer_options for these questions (cascade should handle it
 REM Assuming ON DELETE CASCADE on question_id foreign key in answer_options.
 
 echo Clearing 'options' storage bucket...
-python clear_options_bucket.py
+python scripts/clear_options_bucket.py
 if %errorlevel% neq 0 (
     echo Error clearing storage bucket.
+    exit /b %errorlevel%
+)
+
+echo Deleting practice sessions with subject_id = 1...
+docker exec -i %DB_CONTAINER% psql -U %DB_USER% -d %DB_NAME% -c "DELETE FROM practice_sessions WHERE subject_id = 1;"
+
+if %errorlevel% neq 0 (
+    echo Error executing delete sessions command.
     exit /b %errorlevel%
 )
 

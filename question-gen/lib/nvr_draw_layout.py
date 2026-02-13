@@ -173,6 +173,8 @@ def _shape_to_svg_fragment(
         elif path_d_stroke is not None:
             parts.append(f'  <path d="{path_d_stroke}" fill="none" stroke-width="2" stroke-linejoin="miter" stroke-linecap="butt"{dash_attr} />')
         parts.append(polygon_hatch_lines)
+        if stroke_lines is None and path_d_stroke is None:
+             parts.extend(wrap([path_line("none", 'stroke="#000" stroke-width="2"')]))
         return "\n".join(parts)
     # fallback
     return "\n".join(wrap([path_line("none")]))

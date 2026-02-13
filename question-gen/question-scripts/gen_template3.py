@@ -37,44 +37,99 @@ except ImportError:
     from nvr_logic_frequency import weighted_choice
 
 N_OPTIONS = 5
-ARRAY_SIZE = 3 # 1x3
+MAX_ARRAY_SIZE = 5
+TARGET_NON_NULL = 3
 
 COMMON_SHAPES = ["circle", "square", "triangle", "pentagon", "hexagon", "star", "cross", "diamond"]
 FILLS = ["none", "solid_black", "grey", "grey_light", "diagonal_slash", "horizontal_lines"]
-
-# Definition of features that can vary
-# For an array of size 3, features are:
-# Shape_0, Shape_1, Shape_2
-# Fill_0, Fill_1, Fill_2
-# (Total 6 possible variators)
+ARRAY_TYPES = ["rectangular", "loop", "triangular"]
 
 def generate_question(seed: int) -> dict:
     rng = random.Random(seed)
     
     # 1. Setup
-    # Differentiator: Pick one feature to be the Odd One Out rule.
-    # e.g. "Shape at Pos 1"
+    # Layout Selection
+    # Determine total slots: Target 3 non-null => 0, 1, or 2 nulls.
+    # We want valid layouts for the total size.
+    # Weights for nulls? Uniform? Or per spec "Uncommon" for masking? 
+    # Let's pick Total Size first from [3, 4, 5]
+    total_slots = rng.choice([3, 4, 5])
+    num_nulls = total_slots - TARGET_NON_NULL
+    
+    # Select Array Type
+    # Filter valid types for total_slots
+    valid_types = []
+    
+    # Rectangular: Is there a grid for this size?
+    # 3: 1x3
+    # 4: 2x2, 1x4
+    # 5: 1x5
+    valid_types.append("rectangular")
+    
+    # Loop: Polygon sides = total_slots
+    # 3: Triangle (valid)
+    # 4: Square (valid)
+    # 5: Pentagon (valid)
+    valid_types.append("loop")
+    
+    # Triangular: Tapering 1, 2, 3...
+    # Size 3 (1+2) is valid.
+    # Size 6 (1+2+3) is > 5.
+    # So only valid if total_slots == 3
+    if total_slots == 3:
+        valid_types.append("triangular")
+        
+    array_type = rng.choice(valid_types)
+    
+    # Configure Layout Params
+    layout_params = {"type": array_type, "total_slots": total_slots}
+    
+    if array_type == "rectangular":
+        if total_slots == 4:
+            # 2x2 or 1x4 (more likely 2x2 for "array"-ness)
+            if rng.random() < 0.8:
+                layout_params.update({"rows": 2, "cols": 2})
+            else:
+                layout_params.update({"rows": 1, "cols": 4})
+        else:
+            layout_params.update({"rows": 1, "cols": total_slots})
+    elif array_type == "loop":
+        # Shape matches sides
+        shape_map = {3: "triangle", 4: "square", 5: "pentagon"}
+        layout_params.update({"path_shape": shape_map[total_slots]})
+    elif array_type == "triangular":
+        # Size 3 is fixed structure
+        pass
+        
+    # Mesh Probability (Uncommon = 25%)
+    draw_mesh = (rng.random() < 0.25)
+    layout_params["draw_mesh"] = str(draw_mesh).lower()
+    
+    # Assign Nulls
+    # Randomly pick indices to be null
+    indices = list(range(total_slots))
+    null_indices = set(rng.sample(indices, num_nulls))
+    
+    # Differentiator Setup
+    # Features per NON-NULL position
+    # We need to map logical "Item 0..2" to physical slots?
+    # Or just have feature keys for all slots, and nulls obscure them?
+    # Easier to have feature keys for all slots.
     
     feature_keys = []
-    for i in range(ARRAY_SIZE):
+    for i in range(total_slots):
+        if i in null_indices:
+            continue
         feature_keys.append(f"shape_{i}")
         feature_keys.append(f"fill_{i}")
         
     # Pick target differentiator
-    # Weights? Maybe equal.
     diff_key = rng.choice(feature_keys)
-    
-    # We need to generate N_OPTIONS
-    # One is Correct (Unique value for diff_key, or Common value if 4:1 logic is inverted? 
-    # Usually Odd One Out = 4 have X, 1 has Y. Y is correct.)
     
     max_attempts = 1000
     for attempt in range(max_attempts):
         options = []
         
-        # Determine values for the differentiator
-        # 4 options get "Common Value", 1 option gets "Unique Value"
-        # Values depend on key type (shape or fill)
         is_shape_diff = diff_key.startswith("shape")
         pool = COMMON_SHAPES if is_shape_diff else FILLS
         
@@ -83,21 +138,19 @@ def generate_question(seed: int) -> dict:
         
         correct_idx = rng.randint(0, N_OPTIONS - 1)
         
-        # Generate each option
         for i in range(N_OPTIONS):
             opt = {}
+            # Copy layout params
+            opt.update(layout_params)
+            opt["null_indices"] = list(null_indices) # Store for renderer
+            
             # Set differentiator
             if i == correct_idx:
                 opt[diff_key] = unique_val
             else:
                 opt[diff_key] = common_val
             
-            # Set other features (Variators)
-            # Must avoid accidental 4:1 splits on THESE features
-            # Simple approach: Random choice?
-            # Or "Constraint-Based" from MD?
-            # Let's try Random first, then Validate.
-            
+            # Set other features
             for key in feature_keys:
                 if key == diff_key:
                     continue
@@ -110,46 +163,31 @@ def generate_question(seed: int) -> dict:
             options.append(opt)
             
         # VALIDATION
-        # Check derived parameters
-        # We need to define extractors for relevant properties
         extractors = {}
         
         # Local properties
         for key in feature_keys:
-            # Capture the value of key (e.g. shape_0)
-            # Lambda must capture key!
             extractors[key] = (lambda k: lambda o: o[k])(key)
             
         # Derived properties (Counts)
-        # Total Circles, Total Black, etc.
         for s in COMMON_SHAPES:
             extractors[f"total_{s}"] = lambda o, s=s: sum(1 for k in o if k.startswith("shape") and o[k] == s)
             
         for f in FILLS:
             extractors[f"total_{f}"] = lambda o, f=f: sum(1 for k in o if k.startswith("fill") and o[k] == f)
             
-        # Check conflicts
         conflicts = check_derived_parameters(options, extractors)
-        
-        # Filter conflicts
-        # A conflict is bad if it identifies a DIFFERENT option as the odd one out.
-        # i.e. answer_index != correct_idx
         
         valid = True
         for c in conflicts:
-            # c["answer_index"] matches i
             if c["answer_index"] != correct_idx:
-                # Found an alternative solution!
-                # e.g. Option 2 is unique in Shape_0, but Option 4 is unique in Total_Black.
                 valid = False
                 break
         
         if valid:
-            # Also check for duplicate options (clones)
-            # Serialize opt to json string for comparison (excluding is_correct)
             opt_strs = [json.dumps({k:v for k,v in o.items() if k != "is_correct"}, sort_keys=True) for o in options]
             if len(set(opt_strs)) < N_OPTIONS:
-                valid = False # Clones exist
+                valid = False
                 
         if valid:
             return {
@@ -158,28 +196,54 @@ def generate_question(seed: int) -> dict:
                 "template": "template3",
                 "options": options,
                 "differentiator": diff_key,
-                "array_size": ARRAY_SIZE
+                "array_size": total_slots
             }
             
     raise RuntimeError(f"Failed to generate valid question after {max_attempts} attempts")
 
 def render_option_svg(opt: dict) -> str:
-    """Render 1x3 array of shapes."""
-    # Construct XML for nvr_draw_layout
-    array_el = ET.Element("array", type="rectangular", rows="1", cols="3", draw_mesh="false", draw_full_grid="false")
+    """Render array of shapes with variable layout."""
+    rows = opt.get("rows", "1")
+    cols = opt.get("cols", str(opt["total_slots"]))
+    draw_mesh = opt.get("draw_mesh", "false")
     
-    for i in range(ARRAY_SIZE):
+    # Construct XML for nvr_draw_layout
+    array_attrs = {
+        "type": opt["type"],
+        "draw_mesh": draw_mesh,
+        "draw_full_grid": "false" # Always false per spec for null handling
+    }
+    
+    if opt["type"] == "rectangular":
+        array_attrs["rows"] = str(rows)
+        array_attrs["cols"] = str(cols)
+    elif opt["type"] == "loop":
+        array_attrs["path_shape"] = opt["path_shape"]
+        array_attrs["positions"] = "vertices" # Default for now
+        array_attrs["count"] = str(opt["total_slots"])
+    elif opt["type"] == "triangular":
+        # Triangular doesn't need explicit size if inferred, but library might need it?
+        # Library infers from children.
+        pass
+        
+    array_el = ET.Element("array", **array_attrs)
+    
+    total_slots = opt["total_slots"]
+    null_indices = set(opt["null_indices"])
+    
+    for i in range(total_slots):
+        if i in null_indices:
+            # Add null element
+            ET.SubElement(array_el, "null")
+            continue
+            
         shape_type = opt[f"shape_{i}"]
         fill_type = opt[f"fill_{i}"]
         
-        # Create shape element
-        # Attributes for nvr_draw_layout: key, shading, line_type
-        # mapping FILLS to shading
-        # "solid_black" -> "black" (nvr_draw_layout uses "black", "solid_black")
         shading = fill_type
         if shading == "solid_black": shading = "black"
         
-        shape_el = ET.SubElement(array_el, "shape", key=shape_type, shading=shading)
+        ET.SubElement(array_el, "shape", key=shape_type, shading=shading)
         
     diagram_el = ET.Element("diagram")
     diagram_el.append(array_el)
@@ -210,6 +274,7 @@ def generate_xml_output(questions: list[dict], output_file: Path | None = None) 
             svg_elem.text = svg_str
             
             # Store params
+            # Filter internal keys for cleaner param storage if desired, but keeping all is good for debug
             params_elem = ET.SubElement(opt_elem, "params")
             params_elem.text = json.dumps({k:v for k,v in opt.items() if k != "is_correct"})
 

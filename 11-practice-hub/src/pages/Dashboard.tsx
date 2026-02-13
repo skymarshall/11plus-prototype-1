@@ -33,7 +33,7 @@ export default function Dashboard() {
         alert(`Not enough questions available for this subject. Found ${questions.length}/10.`);
         return;
       }
-      const session = await createSession(user.id, subjectId);
+      const session = await createSession(user.id, subjectId, questions.map(q => q.id));
       navigate(`/test/${session.id}`, { state: { questionIds: questions.map((q) => q.id) } });
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Failed to start test');

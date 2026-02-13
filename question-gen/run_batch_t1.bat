@@ -15,10 +15,12 @@ REM Wait, `question-gen/.env` exists. I'll add a line to the batch file to read 
 cd /d "%~dp0"
 
 echo --- Step 1: Generating Questions (Template 1) ---
-python question-gen/batch/batch_generate_questions.py ^
+if not exist output\batch_t1 mkdir output\batch_t1
+
+python batch/batch_generate_questions.py ^
   --count 10 ^
-  --template question-gen/question-scripts/gen_template1.py ^
-  --output-dir question-gen/output/batch_t1 ^
+  --template question-scripts/gen_template1.py ^
+  --output-dir output/batch_t1 ^
   --id-prefix t1-q ^
   --id-width 3
 
@@ -30,15 +32,8 @@ if %errorlevel% neq 0 (
 echo.
 echo --- Step 2: Uploading and Inserting ---
 
-REM We need to ensure environment variables are loaded.
-REM A simple way is to use `set -a && source .env` in bash, but in cmd it's harder.
-REM I will assume the user has python-dotenv installed or I can write a small loader.
-REM Or I can pass them as arguments? `batch_upload...` takes many args.
-REM But it also looks for SUPABASE_... env vars.
-REM I'll use a python one-liner to run the script with loaded envs.
-
-python -c "import dotenv, os, sys; dotenv.load_dotenv('question-gen/.env'); import subprocess; sys.exit(subprocess.call([sys.executable, 'question-gen/batch/batch_upload_and_insert_questions.py'] + sys.argv[1:]))" ^
-  --manifest question-gen/output/batch_t1/manifest.json ^
+python -c "import dotenv, os, sys; dotenv.load_dotenv('.env'); import subprocess; sys.exit(subprocess.call([sys.executable, 'batch/batch_upload_and_insert_questions.py'] + sys.argv[1:]))" ^
+  --manifest output/batch_t1/manifest.json ^
   --upload supabase ^
   --bucket options ^
   --base-url http://127.0.0.1:54321/storage/v1/object/public/options ^

@@ -26,7 +26,7 @@
 ### [Answers] array of shapes
 ### [Choose] array type, total size 3, any shape, any fill
 ### [Uncommon] add mesh lines
-### [Allow] nulls in array
+### [Allow] 0-2 nulls
 ## Variators
 ### [Each] shape at location, [Each] fill at location
 ## Differentiators
