@@ -126,7 +126,7 @@ def _shape_to_svg_fragment(
     line_type = (shape_el.get("line_type") or "solid").strip().lower()
     if line_type not in ("solid", "dashed", "dotted"):
         line_type = "solid"
-    shading = (shape_el.get("shading") or "white").strip().lower()
+    shading = (shape_el.get("shading") or "black").strip().lower()
 
     vertices, path_d, path_d_stroke, stroke_lines, symbol_transform, _ = container.get_shape_geometry(
         key, motifs_dir
@@ -146,7 +146,7 @@ def _shape_to_svg_fragment(
 
     # Default: opaque fill so stacks display correctly (white = #fff). Set opaque="false" for transparent when needed.
     opaque = (shape_el.get("opaque") or "true").strip().lower() not in ("false", "0")
-    solid = {"solid_black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white_fill": "#fff"}
+    solid = {"solid_black": "#000", "black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white_fill": "#fff"}
     solid["white"] = "#fff" if opaque else "none"
     hatch_keys = ("diagonal_slash", "diagonal_backslash", "horizontal_lines", "vertical_lines")
     if shading in solid:
@@ -819,30 +819,55 @@ def render_shape_with_scatter(
     except SystemExit as e:
         raise ValueError(f"Could not place {actual_count} shapes inside {key!r}: {e}") from e
     # Single scale per shape from layout or motif_scale (XML); no position-based variation.
+    shading = (shape_el.get("shading") or "black").strip().lower()
+    opaque = (shape_el.get("opaque") or "true").strip().lower() not in ("false", "0")
+    solid = {"solid_black": "#000", "black": "#000", "grey": "#808080", "grey_light": "#d0d0d0", "white_fill": "#fff"}
+    solid["white"] = "#fff" if opaque else "none"
+    hatch_keys = ("diagonal_slash", "diagonal_backslash", "horizontal_lines", "vertical_lines")
+
+    fill_attr = "none"
+    shape_parts = []
+    
+    if shading in solid:
+        fill_attr = solid[shading]
+    elif shading in hatch_keys:
+        unique_id = f"scatter_{seed or 0}"
+        polygon_fill_defs, polygon_hatch_lines = container.hatch_continuous_defs_and_lines(
+            f"hatchClip{unique_id}", shading, path_d
+        )
+        shape_parts.append(polygon_fill_defs)
+        fill_attr = f"url(#hatchClip{unique_id})"
+    
+    line_type = (shape_el.get("line_type") or "solid").strip().lower()
+    dash_attr = ' stroke-dasharray="8 4"' if line_type == "dashed" else (' stroke-dasharray="2 4"' if line_type == "dotted" else "")
+    
+    # Use path_d_stroke if present, else path_d
+    stroke_d = path_d_stroke if path_d_stroke is not None else path_d
+    stroke_esc = stroke_d.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+    shape_parts.append(f'  <path d="{stroke_esc}" fill="{fill_attr}" stroke="#000" stroke-width="2" stroke-linejoin="miter" stroke-linecap="butt"{dash_attr} />')
+    
+    if stroke_lines is not None:
+        shape_parts.extend([
+            f'  <line x1="{x1:.2f}" y1="{y1:.2f}" x2="{x2:.2f}" y2="{y2:.2f}" stroke-width="2"{dash_attr} />'
+            for x1, y1, x2, y2 in stroke_lines
+        ])
+    
+    if shading in hatch_keys:
+        shape_parts.append(polygon_hatch_lines)
+        
+    shape_svg = "\n".join(shape_parts)
+    if symbol_transform:
+        shape_svg = f'  <g transform="{symbol_transform}">\n{shape_svg}\n  </g>'
+
+    # Render motifs (fragments)
     fragments = []
     for i, (child_el, (cx, cy)) in enumerate(zip(shape_children, positions)):
         place_scale = _placement_scale(child_el, layout_scale)
         frag = _shape_to_svg_fragment(child_el, motifs_dir, str(i))
         fragments.append(_place_fragment(frag, cx, cy, place_scale))
-    line_type = (shape_el.get("line_type") or "solid").strip().lower()
-    dash_attr = ' stroke-dasharray="8 4"' if line_type == "dashed" else ""
-    body = "\n".join(fragments) + "\n"
-    outline_parts = []
-    if stroke_lines is not None:
-        outline_parts = [
-            f'  <line x1="{x1:.2f}" y1="{y1:.2f}" x2="{x2:.2f}" y2="{y2:.2f}" stroke-width="2"{dash_attr} />'
-            for x1, y1, x2, y2 in stroke_lines
-        ]
-    else:
-        # Use path_d_stroke if present, else path_d (container returns path_d_stroke=None for circle/polygons)
-        stroke_d = path_d_stroke if path_d_stroke is not None else path_d
-        stroke_esc = stroke_d.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
-        outline_parts = [f'  <path d="{stroke_esc}" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="miter" stroke-linecap="butt"{dash_attr} />']
-    if outline_parts:
-        if symbol_transform:
-            body += f'  <g transform="{symbol_transform}">\n' + "\n".join(outline_parts) + "\n  </g>\n"
-        else:
-            body += "\n".join(outline_parts) + "\n"
+
+    # Body: Shape (Background) -> Fragments (Motifs)
+    body = shape_svg + "\n" + "\n".join(fragments)
     return _svg_wrapper(body, "shape-scatter")
 
 

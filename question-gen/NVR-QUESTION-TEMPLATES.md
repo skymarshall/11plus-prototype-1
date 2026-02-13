@@ -24,7 +24,8 @@
 ## Setup
 ### [Odd One Out]
 ### [Answers] array of shapes
-### [Choose] array type, total size 3-5, mesh lines, any shape, any fill
+### [Choose] array type, total size 3, any shape, any fill
+### [Uncommon] add mesh lines
 ### [Allow] nulls in array
 ## Variators
 ### [Each] shape at location, [Each] fill at location
